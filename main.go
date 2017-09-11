@@ -74,7 +74,7 @@ func main() {
 	case "remove":
 		ip, err = lib127.Remove(hostname)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown operation: %v\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "unknown operation: %v\n", op)
 		flag.Usage()
 	}
 
