@@ -93,7 +93,7 @@ Let's say you want to try out [ownCloud](https://owncloud.org/). Simply run:
 docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
 ```
 
-... and your *ownCloud* instance should be available at http://owncload.test.
+... and your *ownCloud* instance should be available at http://owncloud.test.
 
 ## Implementation details
 
