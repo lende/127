@@ -63,7 +63,7 @@ Options:
 
 ### A simple session
 
-Let's map a hostname to a random loopback adddress:
+Let's map a hostname to a random loopback address:
 
 ```console
 $ sudo 127 example.test
