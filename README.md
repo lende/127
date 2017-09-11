@@ -95,40 +95,6 @@ docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
 
 ... and your *ownCloud* instance should be available at http://owncload.test.
 
-### Local development
-
-In this example we have a local project with a `Dockerfile` and the following
-`Makefile`:
-
-```makefile
-name  = myapp
-http != sudo 127 -n $(name).local:80
-
-build:
-    docker build --tag=$(name) .
-
-run:
-    docker run -d --name=$(name) -p $(http):8080 $(name)
-
-stop:
-    docker stop $(name)
-
-start:
-    docker start $(name)
-
-rm: stop
-    docker rm $(name)
-```
-
-This app may be built and started with:
-
-```
-make build run
-```
-
-And will be accessible at: http://myapp.local.
-
-
 ## Implementation details
 
 * Internationalized domain names are converted and stored as [IDNA
