@@ -9,7 +9,7 @@ been tested on Linux, macOS and Windows.
 
 ## Installation
 
-```console
+```
 go get github.com/lende/127
 ```
 
@@ -54,8 +54,8 @@ Options:
     * Backups are only made when previously modified by *another* tool
 * For convenience, `[hostname]:[port]` will translate to `[random-ip]:[port]`
 * If there is a `secure_path`-entry in your `/etc/sudoers`-file, you may have to
-* remove this or add your GO bin-path as an entry (otherwise `sudo` won't find
-* the executable)
+  remove this or add your GO bin-path as an entry (otherwise `sudo` won't find
+  the executable)
 * There is also a [code library](https://godoc.org/github.com/lende/127/lib)
 * provided
 
@@ -89,7 +89,7 @@ PING example.test (127.2.221.30) 56(84) bytes of data.
 
 Let's say you want to try out [ownCloud](https://owncloud.org/). Simply run:
 
-```console
+```
 docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
 ```
 
@@ -122,7 +122,7 @@ rm: stop
 
 This app may be built and started with:
 
-```console
+```
 make build run
 ```
 
@@ -132,11 +132,11 @@ And will be accessible at: http://myapp.local.
 ## Implementation details
 
 * Internationalized domain names are converted and stored as [IDNA
-* Punycode](https://en.wikipedia.org/wiki/Punycode) in the hosts-file (for
-* compatibility)
+  Punycode](https://en.wikipedia.org/wiki/Punycode) in the hosts-file (for
+  compatibility)
 * The tool will never map to "127.0.0.1" (even if missing from hosts-file, like
-* on Windows by default)
+  on Windows by default)
 * It's possible to map to random IPs outside the loopback-range by defining a
-* custom network block via the `-block` option (not sure why you'd want to)
+  custom network block via the `-block` option (not sure why you'd want to)
 * On macOS we automatically create loopback aliases for IPs in the
-* "127.0.0.0/8"-block, as they are not routed to the local machine by default
+  "127.0.0.0/8"-block, as they are not routed to the local machine by default
