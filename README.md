@@ -57,7 +57,7 @@ Options:
   remove this or add your GO bin-path as an entry (otherwise `sudo` won't find
   the executable)
 * There is also a [code library](https://godoc.org/github.com/lende/127/lib)
-* provided
+  provided
 
 ## Examples
 
