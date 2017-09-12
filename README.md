@@ -13,7 +13,7 @@ been tested on Linux, macOS and Windows.
 go get github.com/lende/127
 ```
 
-You may also [download a binary](https://github.com/lende/127/releases).
+You may also [download a binary release](https://github.com/lende/127/releases).
 
 ## Usage and options
 
@@ -49,13 +49,10 @@ Options:
 
 * `set` is the default operation and may be omitted
 * When a hostname is already mapped, `set` will simply get its IP
-* The hosts-file is automatically backed up by default
+* The hosts-file is automatically backed up, by default
     * May be disabled by setting `-backup=""`
     * Backups are only made when previously modified by *another* tool
 * For convenience, `[hostname]:[port]` will translate to `[random-ip]:[port]`
-* If there is a `secure_path`-entry in your `/etc/sudoers`-file, you may have to
-  remove this or add your GO bin-path as an entry (otherwise `sudo` won't find
-  the executable)
 * There is also a [code library](https://godoc.org/github.com/lende/127/lib)
   provided
 
@@ -95,14 +92,16 @@ docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
 
 ... and your *ownCloud* instance should be available at http://owncloud.test.
 
+## Troubleshooting
+
+* If there is a `secure_path`-entry in your `/etc/sudoers`-file, you may have to
+  remove this or add your Go bin-path as an entry (otherwise `sudo` won't find
+  the executable)
+
 ## Implementation details
 
 * Internationalized domain names are converted and stored as [IDNA
   Punycode](https://en.wikipedia.org/wiki/Punycode) in the hosts-file (for
   compatibility)
-* The tool will never map to "127.0.0.1" (even if missing from hosts-file, like
-  on Windows by default)
-* It's possible to map to random IPs outside the loopback-range by defining a
-  custom network block via the `-block` option (not sure why you'd want to)
 * On macOS we automatically create loopback aliases for IPs in the
   "127.0.0.0/8"-block, as they are not routed to the local machine by default
