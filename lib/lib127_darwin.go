@@ -30,6 +30,12 @@ func init() {
 			return err
 		}
 		if strings.HasPrefix(ip, "127.") {
+			// Do not delete alias if another hostname is mapped to it.
+			for _, r := range h.Records() {
+				if r.IpAddress.String() == ip {
+					return nil
+				}
+			}
 			if o, err := exec.Command("ifconfig", "lo0", "-alias", ip).CombinedOutput(); err != nil {
 				return fmt.Errorf("failed to delete alias:\n\t%v", string(o))
 			}
