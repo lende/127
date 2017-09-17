@@ -67,29 +67,9 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-// These variables and functions may be wrapped or replaced with build-specific
-// code, or for testing and debugging purposes.
+// These functions may be wrapped or replaced with build-specific code, or for
+// testing and debugging purposes.
 var (
-	// tempFile returns a temporary file (on Unix and Windows we wrap this in order
-	// to mimic the file attributes of the hosts-file).
-	tempFile = func(dir string, hosts os.FileInfo) (*os.File, error) {
-		return ioutil.TempFile(dir, "127-")
-	}
-
-	// fileWriter wraps the HostsFile for filtering (used on Windows to replace
-	// "\n" with "\r\n").
-	fileWriter = func(f *os.File) io.Writer { return f }
-
-	// adaptHostname validates hostname and converts from unicode to IDNA Punycode
-	// (for compatibility).
-	adaptHostname = func(hostname string) (h string, err error) {
-		h, err = idna.Lookup.ToASCII(hostname)
-		if err != nil || net.ParseIP(hostname) != nil {
-			return "", fmt.Errorf("invalid hostname: %v", hostname)
-		}
-		return h, nil
-	}
-
 	// open opens the HostsFile and returns a representation.
 	open = func(path string) (h hostsfile.Hostsfile, err error) {
 		f, err := os.Open(path)
@@ -100,6 +80,11 @@ var (
 		return hostsfile.Decode(f)
 	}
 
+	// add maps hostname to ip.
+	add = func(h *hostsfile.Hostsfile, hostname, ip string) error {
+		return h.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname)
+	}
+
 	// get returns the ip address associated with the hostname, if any.
 	get = func(h hostsfile.Hostsfile, hostname string) (ip string) {
 		for _, r := range h.Records() {
@@ -108,6 +93,31 @@ var (
 			}
 		}
 		return ""
+	}
+
+	// remove removes hostname mapping.
+	remove = func(h *hostsfile.Hostsfile, hostname, ip string) error {
+		h.Remove(hostname)
+		return nil
+	}
+
+	// tempFile returns a temporary file (on Unix and Windows we wrap this in order
+	// to mimic the file attributes of the hosts-file).
+	tempFile = func(dir string, hosts os.FileInfo) (*os.File, error) {
+		return ioutil.TempFile(dir, "127-")
+	}
+
+	// fileWriter wraps the HostsFile for writing (used on Windows to replace "\n"
+	// with "\r\n").
+	fileWriter = func(f *os.File) io.Writer { return f }
+
+	// adaptHostname validates hostname and converts from unicode to IDNA Punycode.
+	adaptHostname = func(hostname string) (h string, err error) {
+		h, err = idna.Lookup.ToASCII(hostname)
+		if err != nil || net.ParseIP(hostname) != nil {
+			return "", fmt.Errorf("invalid hostname: %v", hostname)
+		}
+		return h, nil
 	}
 
 	// ipSpan returns the smallest and largest valid IP (as integers) within the
@@ -149,7 +159,10 @@ var (
 			return "", fmt.Errorf("no unnasigned IPs in address block: %v", AddressBlock)
 		}
 		for {
-			binary.BigEndian.PutUint32(netIP, minIP+uint32(rand.Int63n(int64(maxIP-minIP))))
+			// Generate a random offset.
+			offset := uint32(rand.Int63n(int64(maxIP - minIP)))
+			// Add random offset and convert integer to IP address.
+			binary.BigEndian.PutUint32(netIP, minIP+offset)
 			if ip = netIP.String(); !taken[ip] {
 				break
 			}
@@ -199,21 +212,10 @@ var (
 		if err = os.Rename(f.Name(), HostsFile); err != nil {
 			return "", err
 		}
-		t := time.Now()
 		if BackupFile != "" {
+			t := time.Now()
 			os.Chtimes(BackupFile, t, t)
 		}
 		return ip, nil
-	}
-
-	// add maps hostname to ip.
-	add = func(h *hostsfile.Hostsfile, hostname, ip string) error {
-		return h.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname)
-	}
-
-	// Remove removes hostname mapping.
-	remove = func(h *hostsfile.Hostsfile, hostname, ip string) error {
-		h.Remove(hostname)
-		return nil
 	}
 )
