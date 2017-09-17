@@ -28,8 +28,8 @@ func Set(hostname string) (ip string, err error) {
 	h, err := open(HostsFile)
 	if err != nil {
 		return "", err
-	} else if ip = get(h, hostname); ip != "" {
-		return ip, nil
+	} else if ip, err = get(h, hostname); ip != "" || err != nil {
+		return ip, err
 	} else if ip, err = randomIP(h); err != nil {
 		return "", err
 	}
@@ -46,7 +46,7 @@ func Get(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return get(h, hostname), nil
+	return get(h, hostname)
 }
 
 // Remove removes the specified hostname and returns the associated IP. Returns
@@ -59,7 +59,7 @@ func Remove(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	ip = get(h, hostname)
+	ip, _ = get(h, hostname)
 	return commit(h, ip, remove(&h, hostname, ip))
 }
 
@@ -86,13 +86,13 @@ var (
 	}
 
 	// get returns the ip address associated with the hostname, if any.
-	get = func(h hostsfile.Hostsfile, hostname string) (ip string) {
+	get = func(h hostsfile.Hostsfile, hostname string) (ip string, err error) {
 		for _, r := range h.Records() {
 			if r.Hostnames[hostname] {
-				return r.IpAddress.String()
+				return r.IpAddress.String(), nil
 			}
 		}
-		return ""
+		return "", nil
 	}
 
 	// remove removes hostname mapping.
