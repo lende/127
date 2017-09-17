@@ -7,14 +7,13 @@ import (
 	"path/filepath"
 )
 
+// Default file locations on Windows.
+var (
+	HostsFile  = os.Getenv("SystemRoot") + "\\System32\\drivers\\etc\\hosts"
+	BackupFile = HostsFile + ".127.old"
+)
+
 func init() {
-
-	// Set the default hosts-file on Windows.
-	HostsFile = os.Getenv("SystemRoot") + "\\System32\\drivers\\etc\\hosts"
-
-	// Set an appropriate default backup file on Windows.
-	BackupFile = HostsFile + ".127-old"
-
 	// Create temporary file in hosts-directory to inherit correct permissions.
 	_tempFile := tempFile
 	tempFile = func(dir string, hosts os.FileInfo) (*os.File, error) {

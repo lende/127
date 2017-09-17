@@ -15,12 +15,8 @@ import (
 	"golang.org/x/net/idna"
 )
 
-// Default settings. Replace these values as neccessary.
-var (
-	HostsFile    = "/etc/hosts"
-	BackupFile   = HostsFile + ".127-old"
-	AddressBlock = "127.0.0.0/8"
-)
+// Default address block.
+var AddressBlock = "127.0.0.0/8"
 
 // Set maps the specified hostname to a random IP within the globally defind
 // AddressBlock, and returns that address. If the hostname is already mapped, we

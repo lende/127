@@ -7,6 +7,12 @@ import (
 	"syscall"
 )
 
+// Default file locations on Unix.
+var (
+	HostsFile  = "/etc/hosts"
+	BackupFile = HostsFile + ".127.old"
+)
+
 func init() {
 	// Create temporary file and copy attributes from hosts-file.
 	_tempFile := tempFile
