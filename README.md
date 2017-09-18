@@ -34,8 +34,6 @@ The operations are:
 
 Options:
 
-  -backup string
-        path to backup file (default "/etc/hosts.127-old")
   -block string
         address block (default "127.0.0.0/8")
   -hosts string
@@ -49,9 +47,6 @@ Options:
 
 * `set` is the default operation and may be omitted
 * When a hostname is already mapped, `set` will simply get its IP
-* The hosts-file is automatically backed up, by default
-    * May be disabled by setting `-backup=""`
-    * Backups are only made when previously modified by *another* tool
 * For convenience, `[hostname]:[port]` will translate to `[random-ip]:[port]`
 * There is also a [code library](https://godoc.org/github.com/lende/127/lib)
   provided
