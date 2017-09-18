@@ -4,19 +4,12 @@ import (
 	"bytes"
 	"io"
 	"os"
-	"path/filepath"
 )
 
-// Default hists-file on Windows.
+// Default hosts-file on Windows.
 var HostsFile = os.Getenv("SystemRoot") + "\\System32\\drivers\\etc\\hosts"
 
 func init() {
-	// Create temporary file in hosts-directory to inherit correct permissions.
-	_tempFile := tempFile
-	tempFile = func(dir string, hosts os.FileInfo) (*os.File, error) {
-		return _tempFile(filepath.Dir(HostsFile), hosts)
-	}
-
 	// Convert newlines from "\n" to "\r\n" on Windows.
 	fileWriter = func(f *os.File) io.Writer { return nlWriter{f} }
 }

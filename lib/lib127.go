@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net"
 	"os"
@@ -101,12 +100,6 @@ var (
 		return nil
 	}
 
-	// tempFile returns a temporary file (on Unix and Windows we wrap this in order
-	// to mimic the file attributes of the hosts-file).
-	tempFile = func(dir string, hosts os.FileInfo) (*os.File, error) {
-		return ioutil.TempFile(dir, "127-")
-	}
-
 	// fileWriter wraps the HostsFile for writing (used on Windows to replace "\n"
 	// with "\r\n").
 	fileWriter = func(f *os.File) io.Writer { return f }
@@ -175,21 +168,12 @@ var (
 		if err != nil {
 			return "", err
 		}
-		hosts, err := os.Stat(HostsFile)
+		f, err := os.OpenFile(HostsFile, os.O_WRONLY|os.O_TRUNC, 0)
 		if err != nil {
 			return "", err
 		}
-		f, err := tempFile("", hosts)
-		if err != nil {
-			return "", err
-		}
-		defer os.Remove(f.Name())
+		defer f.Close()
 		if err = hostsfile.Encode(fileWriter(f), h); err != nil {
-			f.Close()
-			return "", err
-		}
-		f.Close()
-		if err = os.Rename(f.Name(), HostsFile); err != nil {
 			return "", err
 		}
 		return ip, nil

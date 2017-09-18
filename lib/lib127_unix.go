@@ -2,27 +2,5 @@
 
 package lib127
 
-import (
-	"os"
-	"syscall"
-)
-
 // Default hosts-file on Unix.
 var HostsFile = "/etc/hosts"
-
-func init() {
-	// Create temporary file and copy attributes from hosts-file.
-	_tempFile := tempFile
-	tempFile = func(dir string, hosts os.FileInfo) (f *os.File, err error) {
-		if f, err = _tempFile(dir, hosts); err != nil {
-			return nil, err
-		} else if err = os.Chmod(f.Name(), hosts.Mode()); err != nil {
-			return nil, err
-		}
-		uid, gid := hosts.Sys().(*syscall.Stat_t).Uid, hosts.Sys().(*syscall.Stat_t).Gid
-		if err = os.Chown(f.Name(), int(uid), int(gid)); err != nil {
-			return nil, err
-		}
-		return f, err
-	}
-}
