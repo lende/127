@@ -7,11 +7,8 @@ import (
 	"path/filepath"
 )
 
-// Default file locations on Windows.
-var (
-	HostsFile  = os.Getenv("SystemRoot") + "\\System32\\drivers\\etc\\hosts"
-	BackupFile = HostsFile + ".127-old"
-)
+// Default hists-file on Windows.
+var HostsFile = os.Getenv("SystemRoot") + "\\System32\\drivers\\etc\\hosts"
 
 func init() {
 	// Create temporary file in hosts-directory to inherit correct permissions.

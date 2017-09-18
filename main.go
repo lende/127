@@ -39,7 +39,6 @@ func main() {
 	}
 
 	flag.StringVar(&lib127.HostsFile, "hosts", lib127.HostsFile, "path to hosts file")
-	flag.StringVar(&lib127.BackupFile, "backup", lib127.BackupFile, "path to backup file")
 	flag.StringVar(&lib127.AddressBlock, "block", lib127.AddressBlock, "address block")
 	printVersion := flag.Bool("version", false, "print version information")
 	n := flag.Bool("n", false, "do not output a trailing newline")

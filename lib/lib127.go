@@ -170,23 +170,6 @@ var (
 		return ip, nil
 	}
 
-	// backup makes a back-up of the HostsFile to BackupFile if the HostsFile has
-	// been modified since the last time (by some other application). The backup is
-	// skipped if BackupFile is "".
-	backup = func(hostsModified time.Time) error {
-		if BackupFile == "" {
-			return nil
-		}
-		backup, err := os.Stat(BackupFile)
-		if (err == nil && hostsModified.Before(backup.ModTime())) || !os.IsNotExist(err) {
-			return err
-		}
-		if err = os.Remove(BackupFile); err != nil && !os.IsNotExist(err) {
-			return err
-		}
-		return os.Link(HostsFile, BackupFile)
-	}
-
 	// commit commits changes to the HostsFile.
 	commit = func(h hostsfile.Hostsfile, ip string, err error) (string, error) {
 		if err != nil {
@@ -194,9 +177,6 @@ var (
 		}
 		hosts, err := os.Stat(HostsFile)
 		if err != nil {
-			return "", err
-		}
-		if err := backup(hosts.ModTime()); err != nil {
 			return "", err
 		}
 		f, err := tempFile("", hosts)
@@ -211,10 +191,6 @@ var (
 		f.Close()
 		if err = os.Rename(f.Name(), HostsFile); err != nil {
 			return "", err
-		}
-		if BackupFile != "" {
-			t := time.Now()
-			os.Chtimes(BackupFile, t, t)
 		}
 		return ip, nil
 	}
