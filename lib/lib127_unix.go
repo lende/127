@@ -10,7 +10,7 @@ import (
 // Default file locations on Unix.
 var (
 	HostsFile  = "/etc/hosts"
-	BackupFile = HostsFile + ".127.old"
+	BackupFile = HostsFile + ".127-old"
 )
 
 func init() {

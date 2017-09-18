@@ -10,7 +10,7 @@ import (
 // Default file locations on Windows.
 var (
 	HostsFile  = os.Getenv("SystemRoot") + "\\System32\\drivers\\etc\\hosts"
-	BackupFile = HostsFile + ".127.old"
+	BackupFile = HostsFile + ".127-old"
 )
 
 func init() {
