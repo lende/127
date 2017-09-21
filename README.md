@@ -21,7 +21,9 @@ You may also [download a binary release](https://github.com/lende/127/releases).
 $ 127 -h
 127 is a tool for mapping hostnames to random loopback addresses.
 
-Usage: 127 [option ...] hostname [operation]
+Usage: 127 [option ...] [hostname] [operation]
+
+Prints an unassigned random IP if hostname is left out.
 
 The operations are:
 
@@ -47,7 +49,6 @@ Options:
 
 * `set` is the default operation and may be omitted
 * When a hostname is already mapped, `set` will simply get its IP
-* For convenience, `[hostname]:[port]` will translate to `[random-ip]:[port]`
 * There is also a [code library](https://godoc.org/github.com/lende/127/lib)
   provided
 

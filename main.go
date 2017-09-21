@@ -14,9 +14,11 @@ const version = "0.1.1"
 
 const usage = `127 is a tool for mapping hostnames to random loopback addresses.
 
-Usage: 127 [option ...] hostname [operation]
+Usage: 127 [option ...] [hostname] [operation]
 
-The operations are:
+Prints an unassigned random IP if hostname is left out.
+
+Operations:
 
   set
         map hostname to random IP and print IP address (default)
@@ -53,8 +55,7 @@ func main() {
 	hostname, op := flag.Arg(0), flag.Arg(1)
 
 	if hostname == "" {
-		fmt.Fprint(os.Stderr, "missing hostname\n")
-		flag.Usage()
+		op = "ip"
 	}
 
 	var port string
@@ -66,6 +67,8 @@ func main() {
 	}
 
 	switch op {
+	case "ip":
+		ip, err = lib127.RandomIP()
 	case "set", "":
 		ip, err = lib127.Set(hostname)
 	case "get":
@@ -82,7 +85,7 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Print(ip + port)
-	if !*n {
+	if !*n && ip != "" {
 		fmt.Print("\n")
 	}
 }

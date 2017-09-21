@@ -17,6 +17,15 @@ import (
 // Default address block.
 var AddressBlock = "127.0.0.0/8"
 
+// RandomIP returns a unique random ip within the AddressBlock.
+func RandomIP() (ip string, err error) {
+	h, err := open(HostsFile)
+	if err != nil {
+		return "", err
+	}
+	return randomIP(h)
+}
+
 // Set maps the specified hostname to a random IP within the globally defind
 // AddressBlock, and returns that address. If the hostname is already mapped, we
 // return that IP address instead.
