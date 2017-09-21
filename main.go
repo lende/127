@@ -10,7 +10,7 @@ import (
 	"github.com/lende/127/lib"
 )
 
-const version = "0.1.1"
+const version = "0.2"
 
 const usage = `127 is a tool for mapping hostnames to random loopback addresses.
 
