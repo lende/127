@@ -110,7 +110,7 @@ func tmpHosts(t *testing.T) *os.File {
 	if err := ioutil.WriteFile(tmp.Name(), []byte(hosts), 0644); err != nil {
 		t.Errorf("Unexpected error:\n\t%v", err)
 	}
-	HostsFile, BackupFile = tmp.Name(), ""
+	HostsFile = tmp.Name()
 	return tmp
 }
 
