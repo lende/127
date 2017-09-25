@@ -16,6 +16,6 @@ func init() {
 
 type nlWriter struct{ io.Writer }
 
-func (w nlWriter) Write(p []byte) (n int, err error) {
+func (w nlWriter) Write(p []byte) (int, error) {
 	return w.Writer.Write(bytes.Replace(p, []byte("\n"), []byte("\r\n"), -1))
 }

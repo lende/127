@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	var _add, _get, _remove = add, get, remove
+	_add, _get, _remove := add, get, remove
 
 	// Add loopback alias when creating a new mapping on macOS.
 	add = func(h *hostsfile.Hostsfile, hostname, ip string) error {
