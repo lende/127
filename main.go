@@ -4,8 +4,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
-	"strings"
 
 	"github.com/lende/127/lib"
 )
@@ -14,7 +14,7 @@ const version = "0.2"
 
 const usage = `127 is a tool for mapping hostnames to random loopback addresses.
 
-Usage: 127 [option ...] [hostname] [operation]
+Usage: 127 [option ...] [hostname[:port]] [operation]
 
 Prints an unassigned random IP if hostname is left out.
 
@@ -32,7 +32,6 @@ Options:
 `
 
 func main() {
-
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, usage)
 		flag.PrintDefaults()
@@ -42,9 +41,9 @@ func main() {
 
 	flag.StringVar(&lib127.HostsFile, "hosts", lib127.HostsFile, "path to hosts file")
 	flag.StringVar(&lib127.AddressBlock, "block", lib127.AddressBlock, "address block")
-	printVersion := flag.Bool("version", false, "print version information")
-	n := flag.Bool("n", false, "do not output a trailing newline")
-
+	printVersion, n :=
+		flag.Bool("version", false, "print version information"),
+		flag.Bool("n", false, "do not output a trailing newline")
 	flag.Parse()
 
 	if *printVersion {
@@ -52,20 +51,15 @@ func main() {
 		os.Exit(0)
 	}
 
-	hostname, op := flag.Arg(0), flag.Arg(1)
-
-	if hostname == "" {
+	var hostname, port, op string
+	if hostname, op = flag.Arg(0), flag.Arg(1); hostname == "" {
 		op = "ip"
+	} else if h, p, err := net.SplitHostPort(hostname); err == nil {
+		hostname, port = h, ":"+p
 	}
 
-	var port string
 	var ip string
 	var err error
-
-	if parts := strings.SplitN(hostname, ":", 2); len(parts) == 2 {
-		hostname, port = parts[0], ":"+parts[1]
-	}
-
 	switch op {
 	case "ip":
 		ip, err = lib127.RandomIP()
@@ -76,7 +70,7 @@ func main() {
 	case "remove":
 		ip, err = lib127.Remove(hostname)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown operation: %v\n", op)
+		fmt.Fprintf(os.Stderr, "Error: unknown operation: %v\n", op)
 		flag.Usage()
 	}
 
@@ -84,6 +78,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+
 	fmt.Print(ip + port)
 	if !*n && ip != "" {
 		fmt.Print("\n")
