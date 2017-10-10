@@ -5,13 +5,12 @@ package lib127
 import (
 	"encoding/binary"
 	"fmt"
-	"io"
 	"math/rand"
 	"net"
 	"os"
 	"time"
 
-	"github.com/kevinburke/hostsfile/lib"
+	"github.com/lende/hostsfile/lib"
 	"golang.org/x/net/idna"
 )
 
@@ -37,12 +36,14 @@ func Set(hostname string) (ip string, err error) {
 	h, err := open(HostsFile)
 	if err != nil {
 		return "", err
-	} else if ip, err = get(h, hostname); ip != "" || err != nil {
+	}
+	if ip, err = get(h, hostname); ip != "" || err != nil {
 		return ip, err
-	} else if ip, err = randomIP(h, AddressBlock); err != nil {
+	}
+	if ip, err = randomIP(h, AddressBlock); err != nil {
 		return "", err
 	}
-	if err := add(&h, hostname, ip); err != nil {
+	if err = add(&h, hostname, ip); err != nil {
 		return "", err
 	}
 	return ip, commit(h, HostsFile)
@@ -117,14 +118,10 @@ var (
 		return nil
 	}
 
-	// fileWriter wraps the hosts-file for writing (redefined on windows to produce
-	// correct newline characters).
-	fileWriter = func(f *os.File) io.Writer { return f }
-
 	// adaptHostname validates the given hostname and converts it from unicode to
 	// IDNA Punycode.
-	adaptHostname = func(hostname string) (h string, err error) {
-		h, err = idna.Lookup.ToASCII(hostname)
+	adaptHostname = func(hostname string) (string, error) {
+		h, err := idna.Lookup.ToASCII(hostname)
 		if err != nil || net.ParseIP(hostname) != nil {
 			return "", fmt.Errorf("invalid hostname: %v", hostname)
 		}
@@ -188,7 +185,7 @@ var (
 			return err
 		}
 		defer f.Close()
-		if err = hostsfile.Encode(fileWriter(f), h); err != nil {
+		if err = hostsfile.Encode(f, h); err != nil {
 			return err
 		}
 		return nil

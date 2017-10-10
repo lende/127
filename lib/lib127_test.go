@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kevinburke/hostsfile/lib"
+	"github.com/lende/hostsfile/lib"
 )
 
 func TestRandomIP(t *testing.T) {

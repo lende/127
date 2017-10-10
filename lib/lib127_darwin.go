@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/kevinburke/hostsfile/lib"
+	"github.com/lende/hostsfile/lib"
 )
 
 func init() {
