@@ -26,8 +26,7 @@ func TestRandomIP(t *testing.T) {
 		{"127.0.0.0/8", "<nil>"},
 	}
 	for _, test := range tests {
-		AddressBlock = test.block
-		_, err := randomIP(hosts)
+		_, err := randomIP(hosts, test.block)
 		if fmt.Sprint(err) != test.err {
 			if test.err == "<nil>" {
 				t.Errorf("RandomIP():\nUnexpected error:\n\t%v", err)
@@ -40,7 +39,7 @@ func TestRandomIP(t *testing.T) {
 
 func TestOperations(t *testing.T) {
 	defer removeFile(tmpHosts(t))
-	randomIP = func(h hostsfile.Hostsfile) (string, error) {
+	randomIP = func(_ hostsfile.Hostsfile, _ string) (string, error) {
 		return "127.19.110.238", nil
 	}
 	steps := []struct {
