@@ -5,7 +5,8 @@ addresses](https://en.wikipedia.org/wiki/Localhost#Name_resolution).
 
 The tool works as a front-end to the standard
 [hosts-file](https://en.wikipedia.org/wiki/Hosts_(file)) on your system. It has
-been tested on Linux, macOS and Windows.
+been tested on Linux, macOS (but see the
+[troubleshooting section](#troubleshooting)) and Windows.
 
 ## Installation
 
@@ -93,11 +94,17 @@ docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
 * If there is a `secure_path`-entry in your `/etc/sudoers`-file, you may have to
   remove this or add your Go bin-path as an entry (otherwise `sudo` won't find
   the executable)
+    * Alternatively you could set the owner of `/etc/hosts` to a group you are
+      member of (for instance the `sudo`-group), and give it write-access
+* On macOS loopback addresses are not routed to the local host by default, and
+  aliases must be explicitly created for each IP address before biding to it
+    * See this
+      [Super User question](https://superuser.com/questions/458875/) for details
+    * Here is an [idea for a daemon](https://github.com/lende/127d) that would
+      solve the issue
 
 ## Implementation details
 
 * Internationalized domain names are converted and stored as [IDNA
   Punycode](https://en.wikipedia.org/wiki/Punycode) in the hosts-file (for
   compatibility)
-* On macOS we automatically create loopback aliases for IPs in the
-  "127.0.0.0/8"-block, as they are not routed to the local machine by default

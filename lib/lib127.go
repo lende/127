@@ -37,8 +37,8 @@ func Set(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	if ip, err = get(h, hostname); ip != "" || err != nil {
-		return ip, err
+	if ip = get(h, hostname); ip != "" {
+		return ip, nil
 	}
 	if ip, err = randomIP(h, AddressBlock); err != nil {
 		return "", err
@@ -59,7 +59,7 @@ func Get(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return get(h, hostname)
+	return get(h, hostname), nil
 }
 
 // Remove unmaps the specified hostname and returns the associated IP. Returns
@@ -72,10 +72,8 @@ func Remove(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	ip, _ = get(h, hostname)
-	if err := remove(&h, hostname, ip); err != nil {
-		return "", err
-	}
+	ip = get(h, hostname)
+	remove(&h, hostname, ip)
 	return ip, commit(h, HostsFile)
 }
 
@@ -103,19 +101,18 @@ var (
 	}
 
 	// get returns the IP address associated with the given hostname, if any.
-	get = func(h hostsfile.Hostsfile, hostname string) (ip string, err error) {
+	get = func(h hostsfile.Hostsfile, hostname string) (ip string) {
 		for _, r := range h.Records() {
 			if r.Hostnames[hostname] {
-				return r.IpAddress.String(), nil
+				return r.IpAddress.String()
 			}
 		}
-		return "", nil
+		return ""
 	}
 
 	// remove removes the given hostname mapping.
-	remove = func(h *hostsfile.Hostsfile, hostname, ip string) error {
+	remove = func(h *hostsfile.Hostsfile, hostname, ip string) {
 		h.Remove(hostname)
-		return nil
 	}
 
 	// adaptHostname validates the given hostname and converts it from unicode to
