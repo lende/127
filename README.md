@@ -103,7 +103,7 @@ docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
     * Here is an [idea for a daemon] that would solve the issue
 
 [loopback addresses]: https://en.wikipedia.org/wiki/Localhost#Name_resolution
-[hosts file]: https://en.wikipedia.org/wiki/Hosts_(file)
+[hosts-file]: https://en.wikipedia.org/wiki/Hosts_(file)
 [troubleshooting section]: #troubleshooting
 [download a binary release]: https://github.com/lende/127/releases
 [IDNA Punycode]: https://en.wikipedia.org/wiki/Punycode
