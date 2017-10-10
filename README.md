@@ -1,12 +1,10 @@
 # 127
 
 *127* is a tool for mapping easy-to-remember hostnames to random [loopback
-addresses](https://en.wikipedia.org/wiki/Localhost#Name_resolution).
+addresses].
 
-The tool works as a front-end to the standard
-[hosts-file](https://en.wikipedia.org/wiki/Hosts_(file)) on your system. It has
-been tested on Linux, macOS (but see the
-[troubleshooting section](#troubleshooting)) and Windows.
+The tool works as a front-end to the standard [hosts-file] on your system. It has
+been tested on Linux, macOS (but see the [troubleshooting section])) and Windows.
 
 ## Installation
 
@@ -14,7 +12,7 @@ been tested on Linux, macOS (but see the
 go get github.com/lende/127
 ```
 
-You may also [download a binary release](https://github.com/lende/127/releases).
+You may also [download a binary release].
 
 ## Usage and options
 
@@ -48,10 +46,11 @@ Options:
 
 ### Notes
 
-* `set` is the default operation and may be omitted
+* `set` is the default operation, and may be omitted
 * When a hostname is already mapped, `set` will simply get its IP
-* There is also a [code library](https://godoc.org/github.com/lende/127/lib)
-  provided
+* Internationalized domain names are converted and stored as [IDNA Punycode] in
+  the hosts-file (for compatibility)
+* There is also a [Go API] provided
 
 ## Examples
 
@@ -81,13 +80,13 @@ PING example.test (127.2.221.30) 56(84) bytes of data.
 
 ### Testing a third party service
 
-Let's say you want to try out [ownCloud](https://owncloud.org/). Simply run:
+Let's say you want to try out [ownCloud]. Simply run:
 
 ```
 docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
 ```
 
-... and your *ownCloud* instance should be available at http://owncloud.test.
+... and your *ownCloud* instance should be available at `http://owncloud.test`.
 
 ## Troubleshooting
 
@@ -96,15 +95,19 @@ docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
   the executable)
     * Alternatively you could set the owner of `/etc/hosts` to a group you are
       member of (for instance the `sudo`-group), and give it write-access
+    * A third alternative is to copy the `127`-executable to a global path (such
+      as `/usr/local/bin`).
 * On macOS loopback addresses are not routed to the local host by default, and
-  aliases must be explicitly created for each IP address before biding to it
-    * See this
-      [Super User question](https://superuser.com/questions/458875/) for details
-    * Here is an [idea for a daemon](https://github.com/lende/127d) that would
-      solve the issue
+  aliases must be explicitly created for each IP address before binding to it
+    * See this [Super User question] for details
+    * Here is an [idea for a daemon] that would solve the issue
 
-## Implementation details
-
-* Internationalized domain names are converted and stored as [IDNA
-  Punycode](https://en.wikipedia.org/wiki/Punycode) in the hosts-file (for
-  compatibility)
+[loopback addresses]: https://en.wikipedia.org/wiki/Localhost#Name_resolution
+[hosts file]: https://en.wikipedia.org/wiki/Hosts_(file)
+[troubleshooting section]: #troubleshooting
+[download a binary release]: https://github.com/lende/127/releases
+[IDNA Punycode]: https://en.wikipedia.org/wiki/Punycode
+[Go API]: https://godoc.org/github.com/lende/127/lib
+[ownCloud]: https://owncloud.org/
+[Super User question]: https://superuser.com/questions/458875/
+[idea for a daemon]: https://github.com/lende/127d
