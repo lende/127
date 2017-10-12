@@ -4,7 +4,7 @@
 addresses].
 
 The tool works as a front-end to the standard [hosts-file] on your system. It has
-been tested on Linux, macOS (but see the [troubleshooting section])) and Windows.
+been tested on Linux, macOS (but see the [troubleshooting section]) and Windows.
 
 ## Installation
 
@@ -96,7 +96,7 @@ docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
     * Alternatively you could set the owner of `/etc/hosts` to a group you are
       member of (for instance the `sudo`-group), and give it write-access
     * A third alternative is to copy the `127`-executable to a global path (such
-      as `/usr/local/bin`).
+      as `/usr/local/bin`)
 * On macOS loopback addresses are not routed to the local host by default, and
   aliases must be explicitly created for each IP address before binding to it
     * See this [Super User question] for details

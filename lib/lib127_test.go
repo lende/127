@@ -4,11 +4,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"os"
 	"testing"
-
-	"github.com/lende/hostsfile/lib"
 )
 
 func TestRandomIP(t *testing.T) {
@@ -39,9 +38,9 @@ func TestRandomIP(t *testing.T) {
 
 func TestOperations(t *testing.T) {
 	defer removeFile(tmpHosts(t))
-	randomIP = func(_ hostsfile.Hostsfile, _ string) (string, error) {
-		return "127.19.110.238", nil
-	}
+	// Seed the random number generator with a fixed value so randomIP produce
+	// predictable results.
+	rand.Seed(1)
 	steps := []struct {
 		fn                    func(hostname string) (ip string, err error)
 		op, hostname, ip, err string
@@ -51,10 +50,10 @@ func TestOperations(t *testing.T) {
 		{Remove, "Remove", "example.test", "127.75.38.138", "<nil>"},
 		{Remove, "Remove", "example.test", "", "<nil>"},
 		{Get, "Get", "example.test", "", "<nil>"},
-		{Set, "Set", "Hello世界", "127.19.110.238", "<nil>"},
-		{Get, "Get", "Hello世界", "127.19.110.238", "<nil>"},
-		{Get, "Get", "xn--hello-ck1hg65u", "127.19.110.238", "<nil>"},
-		{Remove, "Remove", "xn--hello-ck1hg65u", "127.19.110.238", "<nil>"},
+		{Set, "Set", "Hello世界", "127.134.24.251", "<nil>"},
+		{Get, "Get", "Hello世界", "127.134.24.251", "<nil>"},
+		{Get, "Get", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
+		{Remove, "Remove", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
 		{Get, "Get", "Hello世界", "", "<nil>"},
 		{Set, "Set", "foo bar", "", "invalid hostname: foo bar"},
 		{Set, "Set", "192.168.0.1", "", "invalid hostname: 192.168.0.1"},

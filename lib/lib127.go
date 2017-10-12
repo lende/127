@@ -73,118 +73,113 @@ func Remove(hostname string) (ip string, err error) {
 		return "", err
 	}
 	ip = get(h, hostname)
-	remove(&h, hostname, ip)
+	remove(&h, hostname)
 	return ip, commit(h, HostsFile)
+}
+
+// open opens the hosts-file and returns a representation.
+func open(filename string) (h hostsfile.Hostsfile, err error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return h, err
+	}
+	defer f.Close()
+	return hostsfile.Decode(f)
+}
+
+// add maps the specified hostname to the given IP.
+func add(h *hostsfile.Hostsfile, hostname, ip string) error {
+	return h.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname)
+}
+
+// get returns the IP address associated with the given hostname, if any.
+func get(h hostsfile.Hostsfile, hostname string) (ip string) {
+	for _, r := range h.Records() {
+		if r.Hostnames[hostname] {
+			return r.IpAddress.String()
+		}
+	}
+	return ""
+}
+
+// remove removes the given hostname mapping.
+func remove(h *hostsfile.Hostsfile, hostname string) {
+	h.Remove(hostname)
+}
+
+// adaptHostname validates the given hostname and converts it from unicode to
+// IDNA Punycode.
+func adaptHostname(hostname string) (string, error) {
+	h, err := idna.Lookup.ToASCII(hostname)
+	if err != nil || net.ParseIP(hostname) != nil {
+		return "", fmt.Errorf("invalid hostname: %v", hostname)
+	}
+	return h, nil
+}
+
+// ipSpan returns the smallest and largest valid IP (as integers) within the
+// specified IP network.
+func ipSpan(ipnet *net.IPNet) (minIP, maxIP uint32) {
+	minIP = binary.BigEndian.Uint32(ipnet.IP.To4()) + 1
+	maxIP = minIP + (^binary.BigEndian.Uint32(ipnet.Mask)) - 2
+	return minIP, maxIP
+}
+
+// ips returns the set of all mapped IP addresses within the given IP network
+// (used to check for uniqueness).
+func ips(h hostsfile.Hostsfile, ipnet *net.IPNet) map[string]bool {
+	ips := make(map[string]bool)
+	// Make sure we never touch localhost (may be missing in hosts-file).
+	if ipnet.Contains(net.IP{127, 0, 0, 1}) {
+		ips["127.0.0.1"] = true
+	}
+	for _, r := range h.Records() {
+		if ipnet.Contains(r.IpAddress.IP) {
+			ips[r.IpAddress.String()] = true
+		}
+	}
+	return ips
 }
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-// These functions are defined as variables so they can be wrapped or redefined.
-// Used for platform-specific code and for testing purposes. Some, in their
-// default form, may be intentionally redundant or take unnused arguments.
-var (
-	// open opens the hosts-file and returns a representation.
-	open = func(filename string) (h hostsfile.Hostsfile, err error) {
-		f, err := os.Open(filename)
-		if err != nil {
-			return h, err
-		}
-		defer f.Close()
-		return hostsfile.Decode(f)
+// randomIP returns an unnasigned random IP within the given address block.
+func randomIP(h hostsfile.Hostsfile, block string) (ip string, err error) {
+	_, ipnet, err := net.ParseCIDR(block)
+	if err != nil {
+		return "", err
 	}
+	if ones, _ := ipnet.Mask.Size(); ones > 30 {
+		return "", fmt.Errorf("address block too small: %v", block)
+	}
+	minIP, maxIP := ipSpan(ipnet)
+	taken, netIP := ips(h, ipnet), make(net.IP, 4)
+	if len(taken) >= int(maxIP-minIP) {
+		return "", fmt.Errorf("no unnasigned IPs in address block: %v", block)
+	}
+	for {
+		// Generate a random offset.
+		offset := uint32(rand.Int63n(int64(maxIP - minIP)))
+		// Add random offset and convert integer to IP address.
+		binary.BigEndian.PutUint32(netIP, minIP+offset)
+		if ip = netIP.String(); !taken[ip] {
+			break
+		}
+	}
+	return ip, nil
+}
 
-	// add maps the specified hostname to the given IP.
-	add = func(h *hostsfile.Hostsfile, hostname, ip string) error {
-		return h.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname)
+// commit commits changes to the given hosts-file.
+func commit(h hostsfile.Hostsfile, filename string) error {
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0)
+	if err != nil {
+		return err
 	}
-
-	// get returns the IP address associated with the given hostname, if any.
-	get = func(h hostsfile.Hostsfile, hostname string) (ip string) {
-		for _, r := range h.Records() {
-			if r.Hostnames[hostname] {
-				return r.IpAddress.String()
-			}
-		}
-		return ""
+	defer f.Close()
+	if err = hostsfile.Encode(f, h); err != nil {
+		return err
 	}
-
-	// remove removes the given hostname mapping.
-	remove = func(h *hostsfile.Hostsfile, hostname, ip string) {
-		h.Remove(hostname)
-	}
-
-	// adaptHostname validates the given hostname and converts it from unicode to
-	// IDNA Punycode.
-	adaptHostname = func(hostname string) (string, error) {
-		h, err := idna.Lookup.ToASCII(hostname)
-		if err != nil || net.ParseIP(hostname) != nil {
-			return "", fmt.Errorf("invalid hostname: %v", hostname)
-		}
-		return h, nil
-	}
-
-	// ipSpan returns the smallest and largest valid IP (as integers) within the
-	// specified IP network.
-	ipSpan = func(ipnet *net.IPNet) (minIP, maxIP uint32) {
-		minIP = binary.BigEndian.Uint32(ipnet.IP.To4()) + 1
-		maxIP = minIP + (^binary.BigEndian.Uint32(ipnet.Mask)) - 2
-		return minIP, maxIP
-	}
-
-	// ips returns the set of all mapped IP addresses within the given IP network
-	// (used to check for uniqueness).
-	ips = func(h hostsfile.Hostsfile, ipnet *net.IPNet) map[string]bool {
-		ips := make(map[string]bool)
-		// Make sure we never touch localhost (may be missing in hosts-file).
-		if ipnet.Contains(net.IP{127, 0, 0, 1}) {
-			ips["127.0.0.1"] = true
-		}
-		for _, r := range h.Records() {
-			if ipnet.Contains(r.IpAddress.IP) {
-				ips[r.IpAddress.String()] = true
-			}
-		}
-		return ips
-	}
-
-	// randomIP returns an unnasigned random IP within the given address block.
-	randomIP = func(h hostsfile.Hostsfile, block string) (ip string, err error) {
-		_, ipnet, err := net.ParseCIDR(block)
-		if err != nil {
-			return "", err
-		}
-		if ones, _ := ipnet.Mask.Size(); ones > 30 {
-			return "", fmt.Errorf("address block too small: %v", block)
-		}
-		minIP, maxIP := ipSpan(ipnet)
-		taken, netIP := ips(h, ipnet), make(net.IP, 4)
-		if len(taken) >= int(maxIP-minIP) {
-			return "", fmt.Errorf("no unnasigned IPs in address block: %v", block)
-		}
-		for {
-			// Generate a random offset.
-			offset := uint32(rand.Int63n(int64(maxIP - minIP)))
-			// Add random offset and convert integer to IP address.
-			binary.BigEndian.PutUint32(netIP, minIP+offset)
-			if ip = netIP.String(); !taken[ip] {
-				break
-			}
-		}
-		return ip, nil
-	}
-
-	// commit commits changes to the given hosts-file.
-	commit = func(h hostsfile.Hostsfile, filename string) error {
-		f, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		if err = hostsfile.Encode(f, h); err != nil {
-			return err
-		}
-		return nil
-	}
-)
+	return nil
+}
