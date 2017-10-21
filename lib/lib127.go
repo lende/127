@@ -10,12 +10,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/lende/hostsfile/lib"
+	"github.com/kevinburke/hostsfile/lib"
 	"golang.org/x/net/idna"
 )
 
 // Default address block.
 var AddressBlock = "127.0.0.0/8"
+
+// OS-specific hosts-file location.
+var HostsFile = hostsfile.Location
 
 // RandomIP returns an unassigned random ip within the AddressBlock.
 func RandomIP() (ip string, err error) {
