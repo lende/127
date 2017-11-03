@@ -1,10 +1,13 @@
 package hostsfile
 
 import (
+	"fmt"
 	"net"
 	"os"
 
 	"github.com/kevinburke/hostsfile/lib"
+
+	"golang.org/x/net/idna"
 )
 
 // Location is the OS-specific hosts-file location.
@@ -33,13 +36,16 @@ func Open(filename string) (*Hostsfile, error) {
 }
 
 // GetIP returns the IP address associated with the given hostname, if any.
-func (h Hostsfile) GetIP(hostname string) (ip string) {
+func (h Hostsfile) GetIP(hostname string) (ip string, err error) {
+	if hostname, err = adaptHostname(hostname); err != nil {
+		return "", err
+	}
 	for _, r := range h.hostsfile.Records() {
 		if r.Hostnames[hostname] {
-			return r.IpAddress.String()
+			return r.IpAddress.String(), nil
 		}
 	}
-	return ""
+	return "", nil
 }
 
 // Records returns an array of all entries in the hosts-file.
@@ -51,13 +57,20 @@ func (h Hostsfile) Records() (rs []Record) {
 }
 
 // Set maps the specified hostname to the given IP.
-func (h *Hostsfile) Set(hostname, ip string) error {
+func (h *Hostsfile) Set(hostname, ip string) (err error) {
+	if hostname, err = adaptHostname(hostname); err != nil {
+		return err
+	}
 	return h.hostsfile.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname)
 }
 
 // Remove removes the given hostname mapping.
-func (h *Hostsfile) Remove(hostname string) {
+func (h *Hostsfile) Remove(hostname string) (err error) {
+	if hostname, err = adaptHostname(hostname); err != nil {
+		return err
+	}
 	h.hostsfile.Remove(hostname)
+	return nil
 }
 
 // Save saves the changes to the hosts-file.
@@ -68,4 +81,14 @@ func (h Hostsfile) Save() error {
 	}
 	defer f.Close()
 	return hostsfile.Encode(f, h.hostsfile)
+}
+
+// adaptHostname validates the given hostname and converts it from unicode to
+// IDNA Punycode.
+func adaptHostname(hostname string) (string, error) {
+	h, err := idna.Lookup.ToASCII(hostname)
+	if err != nil || net.ParseIP(hostname) != nil {
+		return "", fmt.Errorf("invalid hostname: %v", hostname)
+	}
+	return h, nil
 }

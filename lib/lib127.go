@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/lende/127/internal/hostsfile"
-
-	"golang.org/x/net/idna"
 )
 
 // Default address block.
@@ -33,15 +31,12 @@ func RandomIP() (ip string, err error) {
 // AddressBlock, and returns that IP. If the hostname is already mapped, we
 // return the already assigned IP address instead.
 func Set(hostname string) (ip string, err error) {
-	if hostname, err = adaptHostname(hostname); err != nil {
-		return "", err
-	}
 	h, err := hostsfile.Open(HostsFile)
 	if err != nil {
 		return "", err
 	}
-	if ip = h.GetIP(hostname); ip != "" {
-		return ip, nil
+	if ip, err = h.GetIP(hostname); ip != "" || err != nil {
+		return ip, err
 	}
 	if ip, err = randomIP(h, AddressBlock); err != nil {
 		return "", err
@@ -55,39 +50,27 @@ func Set(hostname string) (ip string, err error) {
 // GetIP gets the IP associated with the specified hostname. Returns the empty
 // string if hostname were not found.
 func GetIP(hostname string) (ip string, err error) {
-	if hostname, err = adaptHostname(hostname); err != nil {
-		return "", err
-	}
 	h, err := hostsfile.Open(HostsFile)
 	if err != nil {
 		return "", err
 	}
-	return h.GetIP(hostname), nil
+	return h.GetIP(hostname)
 }
 
 // Remove unmaps the specified hostname and returns the associated IP. Returns
 // the empty string if hostname were not found.
 func Remove(hostname string) (ip string, err error) {
-	if hostname, err = adaptHostname(hostname); err != nil {
-		return "", err
-	}
 	h, err := hostsfile.Open(HostsFile)
 	if err != nil {
 		return "", err
 	}
-	ip = h.GetIP(hostname)
-	h.Remove(hostname)
-	return ip, h.Save()
-}
-
-// adaptHostname validates the given hostname and converts it from unicode to
-// IDNA Punycode.
-func adaptHostname(hostname string) (string, error) {
-	h, err := idna.Lookup.ToASCII(hostname)
-	if err != nil || net.ParseIP(hostname) != nil {
-		return "", fmt.Errorf("invalid hostname: %v", hostname)
+	if ip, err = h.GetIP(hostname); err != nil {
+		return "", err
 	}
-	return h, nil
+	if err = h.Remove(hostname); err != nil {
+		return "", err
+	}
+	return ip, h.Save()
 }
 
 // ipSpan returns the smallest and largest valid IP (as integers) within the
