@@ -8,13 +8,15 @@ import (
 	"net"
 	"os"
 	"testing"
+
+	"github.com/lende/127/internal/hostsfile"
 )
 
 func TestRandomIP(t *testing.T) {
 	defer removeFile(tmpHosts(t))
-	hosts, err := open(HostsFile)
+	hosts, err := hostsfile.Open(HostsFile)
 	if err != nil {
-		t.Errorf("open(HostsFile):\nUnexpected error:\n\t%v", err)
+		t.Errorf("hostsfile.Open(HostsFile):\nUnexpected error:\n\t%v", err)
 	}
 	tests := []struct{ block, err string }{
 		{"127.0.0.0/33", "invalid CIDR address: 127.0.0.0/33"},
@@ -45,16 +47,16 @@ func TestOperations(t *testing.T) {
 		fn                    func(hostname string) (ip string, err error)
 		op, hostname, ip, err string
 	}{
-		{Get, "Get", "example.test", "127.75.38.138", "<nil>"},
+		{GetIP, "GetIP", "example.test", "127.75.38.138", "<nil>"},
 		{Set, "Set", "example.test", "127.75.38.138", "<nil>"},
 		{Remove, "Remove", "example.test", "127.75.38.138", "<nil>"},
 		{Remove, "Remove", "example.test", "", "<nil>"},
-		{Get, "Get", "example.test", "", "<nil>"},
+		{GetIP, "GetIP", "example.test", "", "<nil>"},
 		{Set, "Set", "Hello世界", "127.134.24.251", "<nil>"},
-		{Get, "Get", "Hello世界", "127.134.24.251", "<nil>"},
-		{Get, "Get", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
+		{GetIP, "GetIP", "Hello世界", "127.134.24.251", "<nil>"},
+		{GetIP, "GetIP", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
 		{Remove, "Remove", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
-		{Get, "Get", "Hello世界", "", "<nil>"},
+		{GetIP, "GetIP", "Hello世界", "", "<nil>"},
 		{Set, "Set", "foo bar", "", "invalid hostname: foo bar"},
 		{Set, "Set", "192.168.0.1", "", "invalid hostname: 192.168.0.1"},
 		{Set, "Set", "foo_bar", "", "invalid hostname: foo_bar"},

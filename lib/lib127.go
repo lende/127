@@ -52,7 +52,7 @@ func Set(hostname string) (ip string, err error) {
 	return ip, h.Save()
 }
 
-// Get gets the IP associated with the specified hostname. Returns the empty
+// GetIP gets the IP associated with the specified hostname. Returns the empty
 // string if hostname were not found.
 func GetIP(hostname string) (ip string, err error) {
 	if hostname, err = adaptHostname(hostname); err != nil {
