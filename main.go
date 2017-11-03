@@ -66,7 +66,7 @@ func main() {
 	case "set", "":
 		ip, err = lib127.Set(hostname)
 	case "get":
-		ip, err = lib127.Get(hostname)
+		ip, err = lib127.GetIP(hostname)
 	case "remove":
 		ip, err = lib127.Remove(hostname)
 	default:

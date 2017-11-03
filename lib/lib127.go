@@ -40,7 +40,7 @@ func Set(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	if ip = h.Get(hostname); ip != "" {
+	if ip = h.GetIP(hostname); ip != "" {
 		return ip, nil
 	}
 	if ip, err = randomIP(h, AddressBlock); err != nil {
@@ -54,7 +54,7 @@ func Set(hostname string) (ip string, err error) {
 
 // Get gets the IP associated with the specified hostname. Returns the empty
 // string if hostname were not found.
-func Get(hostname string) (ip string, err error) {
+func GetIP(hostname string) (ip string, err error) {
 	if hostname, err = adaptHostname(hostname); err != nil {
 		return "", err
 	}
@@ -62,7 +62,7 @@ func Get(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return h.Get(hostname), nil
+	return h.GetIP(hostname), nil
 }
 
 // Remove unmaps the specified hostname and returns the associated IP. Returns
@@ -75,7 +75,7 @@ func Remove(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	ip = h.Get(hostname)
+	ip = h.GetIP(hostname)
 	h.Remove(hostname)
 	return ip, h.Save()
 }

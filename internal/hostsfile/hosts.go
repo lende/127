@@ -32,8 +32,8 @@ func Open(filename string) (*Hostsfile, error) {
 	return &Hostsfile{h, filename}, nil
 }
 
-// Get returns the IP address associated with the given hostname, if any.
-func (h Hostsfile) Get(hostname string) (ip string) {
+// GetIP returns the IP address associated with the given hostname, if any.
+func (h Hostsfile) GetIP(hostname string) (ip string) {
 	for _, r := range h.hostsfile.Records() {
 		if r.Hostnames[hostname] {
 			return r.IpAddress.String()
