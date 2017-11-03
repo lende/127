@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"os"
 	"time"
 
-	"github.com/kevinburke/hostsfile/lib"
+	"github.com/lende/127/internal/hostsfile"
+
 	"golang.org/x/net/idna"
 )
 
@@ -22,7 +22,7 @@ var HostsFile = hostsfile.Location
 
 // RandomIP returns an unassigned random ip within the AddressBlock.
 func RandomIP() (ip string, err error) {
-	h, err := open(HostsFile)
+	h, err := hostsfile.Open(HostsFile)
 	if err != nil {
 		return "", err
 	}
@@ -36,20 +36,20 @@ func Set(hostname string) (ip string, err error) {
 	if hostname, err = adaptHostname(hostname); err != nil {
 		return "", err
 	}
-	h, err := open(HostsFile)
+	h, err := hostsfile.Open(HostsFile)
 	if err != nil {
 		return "", err
 	}
-	if ip = get(h, hostname); ip != "" {
+	if ip = h.Get(hostname); ip != "" {
 		return ip, nil
 	}
 	if ip, err = randomIP(h, AddressBlock); err != nil {
 		return "", err
 	}
-	if err = add(&h, hostname, ip); err != nil {
+	if err = h.Set(hostname, ip); err != nil {
 		return "", err
 	}
-	return ip, commit(h, HostsFile)
+	return ip, h.Save()
 }
 
 // Get gets the IP associated with the specified hostname. Returns the empty
@@ -58,11 +58,11 @@ func Get(hostname string) (ip string, err error) {
 	if hostname, err = adaptHostname(hostname); err != nil {
 		return "", err
 	}
-	h, err := open(HostsFile)
+	h, err := hostsfile.Open(HostsFile)
 	if err != nil {
 		return "", err
 	}
-	return get(h, hostname), nil
+	return h.Get(hostname), nil
 }
 
 // Remove unmaps the specified hostname and returns the associated IP. Returns
@@ -71,43 +71,13 @@ func Remove(hostname string) (ip string, err error) {
 	if hostname, err = adaptHostname(hostname); err != nil {
 		return "", err
 	}
-	h, err := open(HostsFile)
+	h, err := hostsfile.Open(HostsFile)
 	if err != nil {
 		return "", err
 	}
-	ip = get(h, hostname)
-	remove(&h, hostname)
-	return ip, commit(h, HostsFile)
-}
-
-// open opens the hosts-file and returns a representation.
-func open(filename string) (h hostsfile.Hostsfile, err error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return h, err
-	}
-	defer f.Close()
-	return hostsfile.Decode(f)
-}
-
-// add maps the specified hostname to the given IP.
-func add(h *hostsfile.Hostsfile, hostname, ip string) error {
-	return h.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname)
-}
-
-// get returns the IP address associated with the given hostname, if any.
-func get(h hostsfile.Hostsfile, hostname string) (ip string) {
-	for _, r := range h.Records() {
-		if r.Hostnames[hostname] {
-			return r.IpAddress.String()
-		}
-	}
-	return ""
-}
-
-// remove removes the given hostname mapping.
-func remove(h *hostsfile.Hostsfile, hostname string) {
+	ip = h.Get(hostname)
 	h.Remove(hostname)
+	return ip, h.Save()
 }
 
 // adaptHostname validates the given hostname and converts it from unicode to
@@ -130,7 +100,7 @@ func ipSpan(ipnet *net.IPNet) (minIP, maxIP uint32) {
 
 // ips returns the set of all mapped IP addresses within the given IP network
 // (used to check for uniqueness).
-func ips(h hostsfile.Hostsfile, ipnet *net.IPNet) map[string]bool {
+func ips(h *hostsfile.Hostsfile, ipnet *net.IPNet) map[string]bool {
 	ips := make(map[string]bool)
 	// Make sure we never touch localhost (may be missing in hosts-file).
 	if ipnet.Contains(net.IP{127, 0, 0, 1}) {
@@ -149,7 +119,7 @@ func init() {
 }
 
 // randomIP returns an unnasigned random IP within the given address block.
-func randomIP(h hostsfile.Hostsfile, block string) (ip string, err error) {
+func randomIP(h *hostsfile.Hostsfile, block string) (ip string, err error) {
 	_, ipnet, err := net.ParseCIDR(block)
 	if err != nil {
 		return "", err
@@ -172,17 +142,4 @@ func randomIP(h hostsfile.Hostsfile, block string) (ip string, err error) {
 		}
 	}
 	return ip, nil
-}
-
-// commit commits changes to the given hosts-file.
-func commit(h hostsfile.Hostsfile, filename string) error {
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	if err = hostsfile.Encode(f, h); err != nil {
-		return err
-	}
-	return nil
 }
