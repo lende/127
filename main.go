@@ -4,7 +4,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net"
 	"os"
 
 	"github.com/lende/127/lib"
@@ -14,7 +13,7 @@ const version = "0.2"
 
 const usage = `127 is a tool for mapping hostnames to random loopback addresses.
 
-Usage: 127 [option ...] [hostname[:port]] [operation]
+Usage: 127 [option ...] [hostname] [operation]
 
 Prints an unassigned random IP if hostname is left out.
 
@@ -51,11 +50,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	var hostname, port, op string
+	var hostname, op string
 	if hostname, op = flag.Arg(0), flag.Arg(1); hostname == "" {
 		op = "ip"
-	} else if h, p, err := net.SplitHostPort(hostname); err == nil {
-		hostname, port = h, ":"+p
 	}
 
 	var ip string
@@ -79,7 +76,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Print(ip + port)
+	fmt.Print(ip)
 	if !*n && ip != "" {
 		fmt.Print("\n")
 	}

@@ -20,7 +20,7 @@ You may also [download a binary release].
 $ 127 -h
 127 is a tool for mapping hostnames to random loopback addresses.
 
-Usage: 127 [option ...] [hostname[:port]] [operation]
+Usage: 127 [option ...] [hostname] [operation]
 
 Prints an unassigned random IP if hostname is left out.
 
@@ -83,7 +83,7 @@ PING example.test (127.2.221.30) 56(84) bytes of data.
 Let's say you want to try out [ownCloud]. Simply run:
 
 ```
-docker run -d -p `sudo 127 -n owncloud.test:80`:80 owncloud
+docker run -d -p `sudo 127 -n owncloud.test`:80:80 owncloud
 ```
 
 ... and your *ownCloud* instance should be available at `http://owncloud.test`.
