@@ -35,8 +35,6 @@ Options:
 
 ### Notes
 
-* `set` is the default operation, and may be omitted
-* When a hostname is already mapped, `set` will simply get its IP
 * Internationalized domain names are converted and stored as [IDNA Punycode] in
   the hosts-file (for compatibility)
 * There is also a [Go API] provided
