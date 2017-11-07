@@ -20,28 +20,17 @@ You may also [download a binary release].
 $ 127 -h
 127 is a tool for mapping hostnames to random loopback addresses.
 
-Usage: 127 [option ...] [hostname] [operation]
-
-Prints an unassigned random IP if hostname is left out.
-
-The operations are:
-
-  set
-        map hostname to random IP and print IP address (default)
-  get
-        print IP address associated with hostname
-  remove
-        remove hostname mapping
+Usage: 127 [option ...] [hostname]
+Print IP mapped to hostname, assigning a random IP if no mapping exists.
 
 Options:
-
   -block string
         address block (default "127.0.0.0/8")
+  -d    delete hostname mapping
   -hosts string
         path to hosts file (default "/etc/hosts")
   -n    do not output a trailing newline
-  -version
-        print version information
+  -v    print version information
 ```
 
 ### Notes

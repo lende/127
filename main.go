@@ -13,21 +13,10 @@ const version = "0.2"
 
 const usage = `127 is a tool for mapping hostnames to random loopback addresses.
 
-Usage: 127 [option ...] [hostname] [operation]
-
-Prints an unassigned random IP if hostname is left out.
-
-Operations:
-
-  set
-        map hostname to random IP and print IP address (default)
-  get
-        print IP address associated with hostname
-  remove
-        remove hostname mapping
+Usage: 127 [option ...] [hostname]
+Print IP mapped to hostname, assigning a random IP if no mapping exists.
 
 Options:
-
 `
 
 func main() {
@@ -35,14 +24,14 @@ func main() {
 		fmt.Fprint(os.Stderr, usage)
 		flag.PrintDefaults()
 		fmt.Fprint(os.Stderr, "\n")
-		os.Exit(1)
 	}
 
 	flag.StringVar(&lib127.HostsFile, "hosts", lib127.HostsFile, "path to hosts file")
 	flag.StringVar(&lib127.AddressBlock, "block", lib127.AddressBlock, "address block")
-	printVersion, n :=
-		flag.Bool("version", false, "print version information"),
-		flag.Bool("n", false, "do not output a trailing newline")
+	printVersion, n, delete :=
+		flag.Bool("v", false, "print version information"),
+		flag.Bool("n", false, "do not output a trailing newline"),
+		flag.Bool("d", false, "delete hostname mapping")
 	flag.Parse()
 
 	if *printVersion {
@@ -50,25 +39,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	var hostname, op string
-	if hostname, op = flag.Arg(0), flag.Arg(1); hostname == "" {
-		op = "ip"
-	}
-
 	var ip string
 	var err error
-	switch op {
-	case "ip":
+	if hostname := flag.Arg(0); hostname == "" {
 		ip, err = lib127.RandomIP()
-	case "set", "":
-		ip, err = lib127.Set(hostname)
-	case "get":
-		ip, err = lib127.GetIP(hostname)
-	case "remove":
+	} else if *delete {
 		ip, err = lib127.Remove(hostname)
-	default:
-		fmt.Fprintf(os.Stderr, "Error: unknown operation: %v\n", op)
-		flag.Usage()
+	} else {
+		ip, err = lib127.Set(hostname)
 	}
 
 	if err != nil {
