@@ -6,14 +6,15 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net"
-	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/lende/127/internal/hostsfile"
 )
 
 func TestRandomIP(t *testing.T) {
-	defer removeFile(tmpHosts(t))
+	setupTestHostfile(t)
+
 	hosts, err := hostsfile.Open(HostsFile)
 	if err != nil {
 		t.Errorf("hostsfile.Open(HostsFile):\nUnexpected error:\n\t%v", err)
@@ -39,7 +40,8 @@ func TestRandomIP(t *testing.T) {
 }
 
 func TestOperations(t *testing.T) {
-	defer removeFile(tmpHosts(t))
+	setupTestHostfile(t)
+
 	// Seed the random number generator with a fixed value so randomIP produce
 	// predictable results.
 	rand.Seed(1)
@@ -98,23 +100,14 @@ func TestBlockRange(t *testing.T) {
 	}
 }
 
-func tmpHosts(t *testing.T) *os.File {
-	var hosts = `127.0.0.1 localhost localhost.localdomain
+func setupTestHostfile(t *testing.T) {
+	data := `127.0.0.1 localhost localhost.localdomain
 127.0.0.2 localhost2
 127.75.38.138 example.test
 `
-	tmp, err := ioutil.TempFile("", "hosts.127-test")
-	if err != nil {
-		t.Errorf("Unexpected error:\n\t%v", err)
-	}
-	if err := ioutil.WriteFile(tmp.Name(), []byte(hosts), 0644); err != nil {
-		t.Errorf("Unexpected error:\n\t%v", err)
-	}
-	HostsFile = tmp.Name()
-	return tmp
-}
+	HostsFile = filepath.Join(t.TempDir(), "hosts")
 
-func removeFile(f *os.File) {
-	f.Close()
-	os.Remove(f.Name())
+	if err := ioutil.WriteFile(HostsFile, []byte(data), 0600); err != nil {
+		t.Errorf("Unexpected error:\n\t%v", err)
+	}
 }
