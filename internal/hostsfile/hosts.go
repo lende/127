@@ -49,9 +49,13 @@ func (h Hostsfile) GetIP(hostname string) (ip string, err error) {
 }
 
 // Records returns an array of all entries in the hosts-file.
-func (h Hostsfile) Records() (rs []Record) {
+func (h Hostsfile) Records() (rs []*Record) {
 	for _, r := range h.hostsfile.Records() {
-		rs = append(rs, Record(*r))
+		if len(r.Hostnames) == 0 {
+			continue
+		}
+
+		rs = append(rs, (*Record)(r))
 	}
 	return rs
 }
