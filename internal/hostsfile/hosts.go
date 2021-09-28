@@ -5,8 +5,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/kevinburke/hostsfile/lib"
-
+	hostsfile "github.com/kevinburke/hostsfile/lib"
 	"golang.org/x/net/idna"
 )
 
