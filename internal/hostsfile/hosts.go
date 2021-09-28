@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 
 	hostsfile "github.com/kevinburke/hostsfile/lib"
 	"golang.org/x/net/idna"
@@ -23,7 +24,7 @@ type Hostsfile struct {
 
 // Open opens the hosts-file and returns a representation.
 func Open(filename string) (*Hostsfile, error) {
-	f, err := os.Open(filename)
+	f, err := os.Open(filepath.Clean(filename))
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +79,13 @@ func (h Hostsfile) Save() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	return hostsfile.Encode(f, h.hostsfile)
+
+	if err := hostsfile.Encode(f, h.hostsfile); err != nil {
+		_ = f.Close()
+		return err
+	}
+
+	return f.Close()
 }
 
 // adaptHostname validates the given hostname and converts it from unicode to

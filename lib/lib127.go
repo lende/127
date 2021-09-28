@@ -117,7 +117,7 @@ func randomIP(h *hostsfile.Hostsfile, block string) (ip string, err error) {
 	}
 	for {
 		// Generate a random offset.
-		offset := uint32(rand.Int63n(int64(maxIP - minIP)))
+		offset := uint32(rand.Int63n(int64(maxIP - minIP))) // #nosec G404
 		// Add random offset and convert integer to IP address.
 		binary.BigEndian.PutUint32(netIP, minIP+offset)
 		if ip = netIP.String(); !taken[ip] {
