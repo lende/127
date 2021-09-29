@@ -26,11 +26,11 @@ type Hostsfile struct {
 func Open(filename string) (*Hostsfile, error) {
 	f, err := os.Open(filepath.Clean(filename))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("hostsfile: could not open hosts file: %w", err)
 	}
 	h, err := hostsfile.Decode(f)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("hostsfile: could not decode hosts file: %w", err)
 	}
 	return &Hostsfile{h, filename}, nil
 }
@@ -65,7 +65,10 @@ func (h *Hostsfile) Set(hostname, ip string) (err error) {
 	if hostname, err = adaptHostname(hostname); err != nil {
 		return err
 	}
-	return h.hostsfile.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname)
+	if err := h.hostsfile.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname); err != nil {
+		return fmt.Errorf("hostsfile: could not set hostname: %w", err)
+	}
+	return nil
 }
 
 // Remove removes the given hostname mapping.
@@ -81,23 +84,30 @@ func (h *Hostsfile) Remove(hostname string) (err error) {
 func (h Hostsfile) Save() error {
 	f, err := os.OpenFile(h.filename, os.O_WRONLY|os.O_TRUNC, 0)
 	if err != nil {
-		return err
+		return fmt.Errorf("hostsfile: could not open hosts file %q: %w", h.filename, err)
 	}
 
 	if err := hostsfile.Encode(f, h.hostsfile); err != nil {
 		_ = f.Close()
-		return err
+		return fmt.Errorf("hostsfile: could not encode hosts file %q: %w", h.filename, err)
 	}
 
-	return f.Close()
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("hostsfile: could not close hosts file %q: %w", h.filename, err)
+	}
+
+	return nil
 }
 
 // adaptHostname validates the given hostname and converts it from unicode to
 // IDNA Punycode.
 func adaptHostname(hostname string) (string, error) {
+	if net.ParseIP(hostname) != nil {
+		return "", fmt.Errorf("hostsfile: invalid hostname %q: looks like an IP address", hostname)
+	}
 	h, err := idna.Lookup.ToASCII(hostname)
-	if err != nil || net.ParseIP(hostname) != nil {
-		return "", fmt.Errorf("invalid hostname: %v", hostname)
+	if err != nil {
+		return "", fmt.Errorf("hostsfile: invalid hostname %q: %w", hostname, err)
 	}
 	return h, nil
 }

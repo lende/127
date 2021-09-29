@@ -44,7 +44,10 @@ func Set(hostname string) (ip string, err error) {
 	if err = h.Set(hostname, ip); err != nil {
 		return "", err
 	}
-	return ip, h.Save()
+	if err := h.Save(); err != nil {
+		return "", err
+	}
+	return ip, nil
 }
 
 // GetIP gets the IP associated with the specified hostname. Returns the empty
@@ -64,13 +67,16 @@ func Remove(hostname string) (ip string, err error) {
 	if err != nil {
 		return "", err
 	}
-	if ip, err = h.GetIP(hostname); err != nil {
+	if ip, err = h.GetIP(hostname); ip == "" || err != nil {
 		return "", err
 	}
 	if err = h.Remove(hostname); err != nil {
 		return "", err
 	}
-	return ip, h.Save()
+	if err = h.Save(); err != nil {
+		return "", err
+	}
+	return ip, nil
 }
 
 // ipSpan returns the smallest and largest valid IP (as integers) within the
@@ -105,15 +111,15 @@ func init() {
 func randomIP(h *hostsfile.Hostsfile, block string) (ip string, err error) {
 	_, ipnet, err := net.ParseCIDR(block)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("lib127: could not parse address block: %w", err)
 	}
 	if ones, _ := ipnet.Mask.Size(); ones > 30 {
-		return "", fmt.Errorf("address block too small: %v", block)
+		return "", fmt.Errorf("lib127: address block too small: %v", block)
 	}
 	minIP, maxIP := ipSpan(ipnet)
 	taken, netIP := ips(h, ipnet), make(net.IP, 4)
 	if len(taken) >= int(maxIP-minIP) {
-		return "", fmt.Errorf("no unnasigned IPs in address block: %v", block)
+		return "", fmt.Errorf("lib127: no unnasigned IPs in address block: %v", block)
 	}
 	for {
 		// Generate a random offset.

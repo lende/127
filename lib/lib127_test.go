@@ -8,46 +8,37 @@ import (
 	"net"
 	"path/filepath"
 	"testing"
-
-	"github.com/lende/127/internal/hostsfile"
 )
 
 func TestRandomIP(t *testing.T) {
-	setupTestHostfile(t)
+	setupTests(t)
 
-	hosts, err := hostsfile.Open(HostsFile)
-	if err != nil {
-		t.Errorf("hostsfile.Open(HostsFile):\nUnexpected error:\n\t%v", err)
+	tests := []struct{ block, wantIP, wantErr string }{
+		{"127.0.0.0/33", "", "lib127: could not parse address block: invalid CIDR address: 127.0.0.0/33"},
+		{"127.0.0.0/32", "", "lib127: address block too small: 127.0.0.0/32"},
+		{"127.0.0.0/31", "", "lib127: address block too small: 127.0.0.0/31"},
+		{"127.0.0.0/30", "", "lib127: no unnasigned IPs in address block: 127.0.0.0/30"},
+		{"127.0.0.0/29", "127.0.0.3", "<nil>"},
+		{"127.0.0.0/29", "127.0.0.4", "<nil>"},
+		{"127.0.0.0/8", "127.61.139.76", "<nil>"},
+		{"127.0.0.0/8", "127.167.80.0", "<nil>"},
 	}
-	tests := []struct{ block, err string }{
-		{"127.0.0.0/33", "invalid CIDR address: 127.0.0.0/33"},
-		{"127.0.0.0/32", "address block too small: 127.0.0.0/32"},
-		{"127.0.0.0/31", "address block too small: 127.0.0.0/31"},
-		{"127.0.0.0/30", "no unnasigned IPs in address block: 127.0.0.0/30"},
-		{"127.0.0.0/29", "<nil>"},
-		{"127.0.0.0/8", "<nil>"},
-	}
-	for _, test := range tests {
-		_, err := randomIP(hosts, test.block)
-		if fmt.Sprint(err) != test.err {
-			if test.err == "<nil>" {
-				t.Errorf("RandomIP():\nUnexpected error:\n\t%v", err)
-			} else {
-				t.Errorf("RandomIP():\nExpected error:\n\t%v\ngot:\n\t%v", test.err, err)
-			}
+
+	for _, tt := range tests {
+		AddressBlock = tt.block
+		ip, err := RandomIP()
+		if ip != tt.wantIP || fmt.Sprint(err) != tt.wantErr {
+			t.Errorf("randomIP(%#v)\n\tgot:  %q, %v\n\twant: %q, %v", tt.block, ip, err, tt.wantIP, tt.wantErr)
 		}
 	}
 }
 
 func TestOperations(t *testing.T) {
-	setupTestHostfile(t)
+	setupTests(t)
 
-	// Seed the random number generator with a fixed value so randomIP produce
-	// predictable results.
-	rand.Seed(1)
 	steps := []struct {
-		fn                    func(hostname string) (ip string, err error)
-		op, hostname, ip, err string
+		fn                            func(hostname string) (ip string, err error)
+		op, hostname, wantIP, wantErr string
 	}{
 		{GetIP, "GetIP", "example.test", "127.75.38.138", "<nil>"},
 		{Set, "Set", "example.test", "127.75.38.138", "<nil>"},
@@ -59,19 +50,15 @@ func TestOperations(t *testing.T) {
 		{GetIP, "GetIP", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
 		{Remove, "Remove", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
 		{GetIP, "GetIP", "Hello世界", "", "<nil>"},
-		{Set, "Set", "foo bar", "", "invalid hostname: foo bar"},
-		{Set, "Set", "192.168.0.1", "", "invalid hostname: 192.168.0.1"},
-		{Set, "Set", "foo_bar", "", "invalid hostname: foo_bar"},
+		{Set, "Set", "foo bar", "", `hostsfile: invalid hostname "foo bar": idna: disallowed rune U+0020`},
+		{Set, "Set", "192.168.0.1", "", `hostsfile: invalid hostname "192.168.0.1": looks like an IP address`},
+		{Set, "Set", "foo_bar", "", `hostsfile: invalid hostname "foo_bar": idna: disallowed rune U+005F`},
 	}
-	for _, test := range steps {
-		if ip, err := test.fn(test.hostname); fmt.Sprint(err) != test.err {
-			if test.err == "<nil>" {
-				t.Errorf("%v(%#v):\nUnexpected error:\n\t%v", test.op, test.hostname, err)
-			} else {
-				t.Errorf("%v(%#v):\nExpected error:\n\t%v\ngot:\n\t%v", test.op, test.hostname, test.err, err)
-			}
-		} else if ip != test.ip {
-			t.Errorf("%v(%#v):\nWant return value:\n\t%#v,\nhave:\n\t%#v", test.op, test.hostname, test.ip, ip)
+
+	for _, s := range steps {
+		ip, err := s.fn(s.hostname)
+		if ip != s.wantIP || fmt.Sprint(err) != s.wantErr {
+			t.Errorf("%s(%#v)\n\tgot:  %q, %v\n\twant: %q, %v", s.op, s.hostname, ip, err, s.wantIP, s.wantErr)
 		}
 	}
 }
@@ -100,7 +87,9 @@ func TestBlockRange(t *testing.T) {
 	}
 }
 
-func setupTestHostfile(t *testing.T) {
+func setupTests(t *testing.T) {
+	rand.Seed(1) // Set a fixed random seed for predictable results.
+
 	data := `127.0.0.1 localhost localhost.localdomain
 127.0.0.2 localhost2
 127.75.38.138 example.test
