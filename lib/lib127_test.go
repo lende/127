@@ -88,7 +88,11 @@ func TestBlockRange(t *testing.T) {
 }
 
 func setupTests(t *testing.T) {
-	rand.Seed(1) // Set a fixed random seed for predictable results.
+	// Ensure predictable results with a pseudo-random number generator.
+	r := rand.New(rand.NewSource(1))
+	randUint32 = func(max uint32) (uint32, error) {
+		return uint32(r.Int63n(int64(max))), nil
+	}
 
 	data := `127.0.0.1 localhost localhost.localdomain
 127.0.0.2 localhost2

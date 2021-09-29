@@ -3,20 +3,19 @@
 package lib127
 
 import (
+	"crypto/rand"
 	"encoding/binary"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net"
-	"time"
 
 	"github.com/lende/127/internal/hostsfile"
 )
 
-// Default address block.
-var AddressBlock = "127.0.0.0/8"
-
-// OS-specific hosts-file location.
-var HostsFile = hostsfile.Location
+var (
+	AddressBlock = "127.0.0.0/8"      // AddressBlock is the default address block.
+	HostsFile    = hostsfile.Location // HostsFile is the default hosts file location.
+)
 
 // RandomIP returns an unassigned random ip within the AddressBlock.
 func RandomIP() (ip string, err error) {
@@ -103,10 +102,6 @@ func ips(h *hostsfile.Hostsfile, ipnet *net.IPNet) map[string]bool {
 	return ips
 }
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 // randomIP returns an unnasigned random IP within the given address block.
 func randomIP(h *hostsfile.Hostsfile, block string) (ip string, err error) {
 	_, ipnet, err := net.ParseCIDR(block)
@@ -123,7 +118,11 @@ func randomIP(h *hostsfile.Hostsfile, block string) (ip string, err error) {
 	}
 	for {
 		// Generate a random offset.
-		offset := uint32(rand.Int63n(int64(maxIP - minIP))) // #nosec G404
+		offset, err := randUint32(maxIP - minIP) // #nosec G404
+		if err != nil {
+			return "", fmt.Errorf("lib127: cound not generate random offset: %v", err)
+		}
+
 		// Add random offset and convert integer to IP address.
 		binary.BigEndian.PutUint32(netIP, minIP+offset)
 		if ip = netIP.String(); !taken[ip] {
@@ -131,4 +130,13 @@ func randomIP(h *hostsfile.Hostsfile, block string) (ip string, err error) {
 		}
 	}
 	return ip, nil
+}
+
+// randUint32 is a cryptographically secure random number generator.
+var randUint32 = func(max uint32) (uint32, error) {
+	bigInt, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		return 0, err
+	}
+	return uint32(bigInt.Int64()), nil
 }
