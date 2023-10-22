@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	lib127 "github.com/lende/127/lib"
+	lib127 "github.com/lende/127/lib127"
 )
 
 const version = "0.3"

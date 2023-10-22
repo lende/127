@@ -1,15 +1,16 @@
 # 127
 
-*127* is a tool for mapping easy-to-remember hostnames to random [loopback
-addresses].
+_127_ is a tool for mapping easy-to-remember hostnames to random
+[loopback addresses].
 
-The tool works as a front-end to the standard [hosts-file] on your system. It has
-been tested on Linux, macOS (but see the [troubleshooting section]) and Windows.
+The tool works as a front-end to the standard [hosts-file] on your system. It
+has been tested on Linux, macOS (but see the [troubleshooting section]) and
+Windows.
 
 ## Installation
 
 ```
-go get github.com/lende/127
+go install github.com/lende/127
 ```
 
 You may also [download a binary release].
@@ -35,9 +36,9 @@ Options:
 
 ### Notes
 
-* Internationalized domain names are converted and stored as [IDNA Punycode] in
+- Internationalized domain names are converted and stored as [IDNA Punycode] in
   the hosts-file (for compatibility)
-* There is also a [Go API] provided
+- There is also a [Go API] provided
 
 ## Examples
 
@@ -73,21 +74,21 @@ Let's say you want to try out [ownCloud]. Simply run:
 docker run -d -p `sudo 127 -n owncloud.test`:80:80 owncloud
 ```
 
-... and your *ownCloud* instance should be available at `http://owncloud.test`.
+... and your _ownCloud_ instance should be available at `http://owncloud.test`.
 
 ## Troubleshooting
 
-* If there is a `secure_path`-entry in your `/etc/sudoers`-file, you may have to
+- If there is a `secure_path`-entry in your `/etc/sudoers`-file, you may have to
   remove this or add your Go bin-path as an entry (otherwise `sudo` won't find
   the executable)
-    * Alternatively you could set the owner of `/etc/hosts` to a group you are
-      member of (for instance the `sudo`-group), and give it write-access
-    * A third alternative is to copy the `127`-executable to a global path (such
-      as `/usr/local/bin`)
-* On macOS loopback addresses are not routed to the local host by default, and
+  - Alternatively you could set the owner of `/etc/hosts` to a group you are
+    member of (for instance the `sudo`-group), and give it write-access
+  - A third alternative is to copy the `127`-executable to a global path (such
+    as `/usr/local/bin`)
+- On macOS loopback addresses are not routed to the local host by default, and
   aliases must be explicitly created for each IP address before binding to it
-    * See this [Super User question] for details
-    * Here is an [idea for a daemon] that would solve the issue
+  - See this [Super User question] for details
+  - Here is an [idea for a daemon] that would solve the issue
 
 [loopback addresses]: https://en.wikipedia.org/wiki/Localhost#Name_resolution
 [hosts-file]: https://en.wikipedia.org/wiki/Hosts_(file)
