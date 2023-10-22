@@ -3,9 +3,9 @@ package lib127
 import (
 	"encoding/binary"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -100,7 +100,7 @@ func setupTests(t *testing.T) {
 `
 	HostsFile = filepath.Join(t.TempDir(), "hosts")
 
-	if err := ioutil.WriteFile(HostsFile, []byte(data), 0600); err != nil {
+	if err := os.WriteFile(HostsFile, []byte(data), 0600); err != nil {
 		t.Errorf("Unexpected error:\n\t%v", err)
 	}
 }

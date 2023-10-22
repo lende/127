@@ -1,0 +1,7 @@
+# Binary built with `go build`.
+127
+127.exe
+
+# Test binary built with `go test -c`.
+*.test
+*.test.exe
