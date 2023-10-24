@@ -2,12 +2,17 @@
 package main
 
 import (
+	_ "embed"
 	"os"
+	"strings"
 
 	"github.com/lende/127/internal/cli"
 )
 
+//go:embed VERSION
+var version string
+
 func main() {
-	status := cli.NewApp(os.Stdout, os.Stderr).Run(os.Args[1:]...)
-	os.Exit(status)
+	app := cli.NewApp(strings.TrimSpace(version), os.Stdout, os.Stderr)
+	os.Exit(app.Run(os.Args[1:]...))
 }

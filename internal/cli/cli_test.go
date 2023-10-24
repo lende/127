@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -23,6 +24,7 @@ func TestApp(t *testing.T) {
 
 	run("localhost").assertStdout(t, "127.0.0.1")
 	run("-b", "192.168.0.0").assertStderr(t, fmtErrBlock, "192.168.0.0")
+	run("-v").assertStdout(t, "127 test-version %s/%s", runtime.GOOS, runtime.GOARCH)
 }
 
 type output struct {
@@ -32,7 +34,7 @@ type output struct {
 
 func run(args ...string) output {
 	var stdout, stderr strings.Builder
-	app := cli.NewApp(&stdout, &stderr)
+	app := cli.NewApp("test-version", &stdout, &stderr)
 
 	return output{
 		status: app.Run(args...),

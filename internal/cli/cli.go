@@ -9,8 +9,6 @@ import (
 	"github.com/lende/127/lib127"
 )
 
-const version = "0.3"
-
 const (
 	StatusSuccess = 0 // StatusSuccess is the status code returned on success.
 	StatusFailure = 1 // StatusFailure is the status code returned on failure.
@@ -18,12 +16,13 @@ const (
 
 // App is a command-line interface to lib127.
 type App struct {
+	version        string
 	stdout, stderr io.Writer
 }
 
 // NewApp returns a new App with the given stdout and stderr writers for output.
-func NewApp(stdout, stderr io.Writer) *App {
-	return &App{stdout: stdout, stderr: stderr}
+func NewApp(version string, stdout, stderr io.Writer) *App {
+	return &App{version: version, stdout: stdout, stderr: stderr}
 }
 
 // Run runs the application with the given arguments. Returns 0 on success and 1
@@ -56,7 +55,7 @@ Options:
 	}
 
 	if *printVersion {
-		fmt.Fprintf(a.stdout, "127 %s %s/%s\n", version, runtime.GOOS, runtime.GOARCH)
+		fmt.Fprintf(a.stdout, "127 %s %s/%s\n", a.version, runtime.GOOS, runtime.GOARCH)
 		return 0
 	}
 
