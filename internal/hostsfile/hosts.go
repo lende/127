@@ -28,6 +28,8 @@ func Open(filename string) (*Hostsfile, error) {
 	if err != nil {
 		return nil, fmt.Errorf("hostsfile: could not open hosts file: %w", err)
 	}
+	defer f.Close()
+
 	h, err := hostsfile.Decode(f)
 	if err != nil {
 		return nil, fmt.Errorf("hostsfile: could not decode hosts file: %w", err)

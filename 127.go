@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	lib127 "github.com/lende/127/lib127"
+	"github.com/lende/127/lib127"
 )
 
 const version = "0.3"
@@ -26,8 +26,9 @@ func main() {
 		fmt.Fprint(os.Stderr, "\n")
 	}
 
-	flag.StringVar(&lib127.HostsFile, "hosts", lib127.HostsFile, "path to hosts file")
-	flag.StringVar(&lib127.AddressBlock, "block", lib127.AddressBlock, "address block")
+	hostsFile := flag.String("hosts", lib127.DefaultHostsFile(), "path to hosts file")
+	addressBlock := flag.String("block", lib127.DefaultAddressBlock, "address block")
+
 	printVersion, n, delete :=
 		flag.Bool("v", false, "print version information"),
 		flag.Bool("n", false, "do not output a trailing newline"),
@@ -39,14 +40,18 @@ func main() {
 		os.Exit(0)
 	}
 
+	h := new(lib127.Hosts).
+		WithHostsFile(*hostsFile).
+		WithAddressBlock(*addressBlock)
+
 	var ip string
 	var err error
 	if hostname := flag.Arg(0); hostname == "" {
-		ip, err = lib127.RandomIP()
+		ip, err = h.RandomIP()
 	} else if *delete {
-		ip, err = lib127.Remove(hostname)
+		ip, err = h.Remove(hostname)
 	} else {
-		ip, err = lib127.Set(hostname)
+		ip, err = h.Set(hostname)
 	}
 
 	if err != nil {
