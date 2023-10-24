@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"net"
 
-	"github.com/lende/127/internal/hostsfile"
+	"github.com/lende/127/internal/hosts"
 )
 
 // DefaultAddressBlock is the default address block.
@@ -17,7 +17,7 @@ const DefaultAddressBlock = "127.0.0.0/8"
 
 // DefaultHostsFile returns the location of the default hosts file.
 func DefaultHostsFile() string {
-	return hostsfile.Location
+	return hosts.FileLocation
 }
 
 // Hosts provide methods for mapping hostnames to random IP addresses. Its zero
@@ -137,11 +137,11 @@ func Remove(hostname string) (ip string, err error) {
 	return DefaultHosts.Remove(hostname)
 }
 
-func (h *Hosts) hostsFile() (*hostsfile.Hostsfile, error) {
+func (h *Hosts) hostsFile() (*hosts.File, error) {
 	if h.filename == "" {
-		h.filename = hostsfile.Location
+		h.filename = hosts.FileLocation
 	}
-	return hostsfile.Open(h.filename)
+	return hosts.Open(h.filename)
 }
 
 func (h *Hosts) addressBlock() string {
@@ -158,7 +158,7 @@ func (h *Hosts) randUint32(max uint32) (uint32, error) {
 	return h.randFunc(max)
 }
 
-func (h *Hosts) randomIP(f *hostsfile.Hostsfile, block string) (ip string, err error) {
+func (h *Hosts) randomIP(f *hosts.File, block string) (ip string, err error) {
 	_, ipnet, err := net.ParseCIDR(block)
 	if err != nil {
 		return "", fmt.Errorf("lib127: could not parse address block: %w", err)
@@ -197,7 +197,7 @@ func ipSpan(ipnet *net.IPNet) (minIP, maxIP uint32) {
 
 // ips returns the set of all mapped IP addresses within the given IP network
 // (used to check for uniqueness).
-func ips(f *hostsfile.Hostsfile, ipnet *net.IPNet) map[string]bool {
+func ips(f *hosts.File, ipnet *net.IPNet) map[string]bool {
 	ips := make(map[string]bool)
 	// Make sure we never touch localhost (may be missing in hosts-file).
 	if ipnet.Contains(net.IP{127, 0, 0, 1}) {
