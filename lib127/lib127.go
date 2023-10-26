@@ -1,4 +1,4 @@
-// Package lib27 provides methods for mapping hostnames to random loopback
+// Package lib127 provides methods for mapping hostnames to random loopback
 // addresses.
 package lib127
 
@@ -12,57 +12,40 @@ import (
 	"github.com/lende/127/internal/hosts"
 )
 
-// DefaultAddressBlock is the default address block.
-const DefaultAddressBlock = "127.0.0.0/8"
-
-// DefaultHostsFile returns the location of the default hosts file.
-func DefaultHostsFile() string {
-	return hosts.FileLocation
-}
-
 // Hosts provide methods for mapping hostnames to random IP addresses. Its zero
 // value is usable and provides good defaults.
 type Hosts struct {
 	filename string
-	block    string
 	randFunc func(uint32) (uint32, error)
+}
+
+func NewHosts(filename string) *Hosts {
+	return &Hosts{filename: filename}
 }
 
 // DefaultHosts is the default Hosts and is used by GetIP, RandomIP, Remove, and
 // Set.
 var DefaultHosts = &Hosts{}
 
-// WithHostsFile configures and returns a copy of Hosts with the given hosts file.
-func (h Hosts) WithHostsFile(filename string) *Hosts {
-	h.filename = filename
-	return &h
-}
-
-// WithFile configures and returns a copy of Hosts with the given address block.
-func (h Hosts) WithAddressBlock(block string) *Hosts {
-	h.block = block
-	return &h
-}
-
-// RandomIP returns an unassigned random ip within the configured address block.
+// RandomIP returns a random unassigned loopback address.
 func (h *Hosts) RandomIP() (ip string, err error) {
 	f, err := h.hostsFile()
 	if err != nil {
 		return "", err
 	}
-	return h.randomIP(f, h.addressBlock())
+	return h.randomIP(f)
 }
 
-// RandomIP returns an unassigned random ip within the configured address block.
+// RandomIP returns a random unassigned loopback address.
 //
 // RandomIP is a wrapper around DefaultHosts.RandomIP.
 func RandomIP() (ip string, err error) {
 	return DefaultHosts.RandomIP()
 }
 
-// Set maps the specified hostname to an unnasigned random IP within the
-// configured address block, and returns that IP. If the hostname is already
-// mapped, we return the already assigned IP address instead.
+// Set maps the specified hostname to a random unnasigned loopback address, and
+// returns that IP. If the hostname is already mapped, we return the already
+// assigned IP address instead.
 func (h *Hosts) Set(hostname string) (ip string, err error) {
 	f, err := h.hostsFile()
 	if err != nil {
@@ -71,7 +54,7 @@ func (h *Hosts) Set(hostname string) (ip string, err error) {
 	if ip, err = f.GetIP(hostname); ip != "" || err != nil {
 		return ip, err
 	}
-	if ip, err = h.randomIP(f, h.addressBlock()); err != nil {
+	if ip, err = h.randomIP(f); err != nil {
 		return "", err
 	}
 	if err = f.Set(hostname, ip); err != nil {
@@ -83,9 +66,9 @@ func (h *Hosts) Set(hostname string) (ip string, err error) {
 	return ip, nil
 }
 
-// Set maps the specified hostname to an unnasigned random IP within the
-// AddressBlock, and returns that IP. If the hostname is already mapped, we
-// return the already assigned IP address instead.
+// Set maps the specified hostname to an random unassigned loopback address, and
+// returns that IP. If the hostname is already mapped, we return the already
+// assigned IP address instead.
 //
 // Set is a wrapper around DefaultHosts.Set.
 func Set(hostname string) (ip string, err error) {
@@ -144,13 +127,6 @@ func (h *Hosts) hostsFile() (*hosts.File, error) {
 	return hosts.Open(h.filename)
 }
 
-func (h *Hosts) addressBlock() string {
-	if h.block == "" {
-		return DefaultAddressBlock
-	}
-	return h.block
-}
-
 func (h *Hosts) randUint32(max uint32) (uint32, error) {
 	if h.randFunc == nil {
 		return defaultRandFunc(max)
@@ -158,19 +134,9 @@ func (h *Hosts) randUint32(max uint32) (uint32, error) {
 	return h.randFunc(max)
 }
 
-func (h *Hosts) randomIP(f *hosts.File, block string) (ip string, err error) {
-	_, ipnet, err := net.ParseCIDR(block)
-	if err != nil {
-		return "", fmt.Errorf("lib127: could not parse address block: %w", err)
-	}
-	if ones, _ := ipnet.Mask.Size(); ones > 30 {
-		return "", fmt.Errorf("lib127: address block too small: %v", block)
-	}
-	minIP, maxIP := ipSpan(ipnet)
-	taken, netIP := ips(f, ipnet), make(net.IP, 4)
-	if len(taken) >= int(maxIP-minIP) {
-		return "", fmt.Errorf("lib127: no unnasigned IPs in address block: %v", block)
-	}
+func (h *Hosts) randomIP(f *hosts.File) (ip string, err error) {
+	minIP, maxIP := ipSpan(loopbackBlock)
+	taken, netIP := ips(f, loopbackBlock), make(net.IP, 4)
 	for {
 		// Generate a random offset.
 		offset, err := h.randUint32(maxIP - minIP) // #nosec G404
@@ -218,4 +184,9 @@ var defaultRandFunc = func(max uint32) (uint32, error) {
 		return 0, err
 	}
 	return uint32(bigInt.Int64()), nil
+}
+
+var loopbackBlock = &net.IPNet{
+	IP:   net.IPv4(127, 0, 0, 0),
+	Mask: net.CIDRMask(8, 32),
 }

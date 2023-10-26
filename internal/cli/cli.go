@@ -6,6 +6,7 @@ import (
 	"io"
 	"runtime"
 
+	"github.com/lende/127/internal/hosts"
 	"github.com/lende/127/lib127"
 )
 
@@ -46,8 +47,7 @@ Options:
 	var (
 		printVersion  = flags.Bool("v", false, "print version information")
 		deleteMapping = flags.Bool("d", false, "delete mapping")
-		hostsFile     = flags.String("f", lib127.DefaultHostsFile(), "path to hosts file")
-		addressBlock  = flags.String("b", lib127.DefaultAddressBlock, "address block")
+		hostsFile     = flags.String("f", hosts.FileLocation, "path to hosts file")
 	)
 
 	if err := flags.Parse(args); err != nil {
@@ -59,9 +59,7 @@ Options:
 		return 0
 	}
 
-	hosts := new(lib127.Hosts).
-		WithHostsFile(*hostsFile).
-		WithAddressBlock(*addressBlock)
+	hosts := lib127.NewHosts(*hostsFile)
 
 	switch hostname := flags.Arg(0); {
 	case hostname == "":

@@ -13,21 +13,15 @@ import (
 func TestRandomIP(t *testing.T) {
 	h := newHosts(t)
 
-	tests := []struct{ block, wantIP, wantErr string }{
-		{"127.0.0.0/33", "", "lib127: could not parse address block: invalid CIDR address: 127.0.0.0/33"},
-		{"127.0.0.0/32", "", "lib127: address block too small: 127.0.0.0/32"},
-		{"127.0.0.0/31", "", "lib127: address block too small: 127.0.0.0/31"},
-		{"127.0.0.0/30", "", "lib127: no unnasigned IPs in address block: 127.0.0.0/30"},
-		{"127.0.0.0/29", "127.0.0.3", "<nil>"},
-		{"127.0.0.0/29", "127.0.0.4", "<nil>"},
-		{"127.0.0.0/8", "127.61.139.76", "<nil>"},
-		{"127.0.0.0/8", "127.167.80.0", "<nil>"},
+	tests := []struct{ wantIP, wantErr string }{
+		{"127.134.24.251", "<nil>"},
+		{"127.17.127.229", "<nil>"},
+		{"127.129.197.227", "<nil>"},
 	}
 	for _, tt := range tests {
-		h = h.WithAddressBlock(tt.block)
 		ip, err := h.RandomIP()
 		if ip != tt.wantIP || fmt.Sprint(err) != tt.wantErr {
-			t.Errorf("randomIP(%#v)\n\tgot:  %q, %v\n\twant: %q, %v", tt.block, ip, err, tt.wantIP, tt.wantErr)
+			t.Errorf("randomIP()\n\tgot:  %q, %v\n\twant: %q, %v", ip, err, tt.wantIP, tt.wantErr)
 		}
 	}
 }
@@ -71,11 +65,15 @@ func newHosts(t *testing.T) *lib127.Hosts {
 		t.Errorf("Unexpected error:\n\t%v", err)
 	}
 
+	h := lib127.NewHosts(hostsFile)
+
 	// Ensure predictable results with a pseudo-random number generator.
 	r := rand.New(rand.NewSource(1))
-	var randFunc = func(max uint32) (uint32, error) {
-		return uint32(r.Int63n(int64(max))), nil
-	}
+	lib127.SetRandFunc(h,
+		func(max uint32) (uint32, error) {
+			return uint32(r.Int63n(int64(max))), nil
+		},
+	)
 
-	return new(lib127.Hosts).WithHostsFile(hostsFile).WithRandFunc(randFunc)
+	return h
 }

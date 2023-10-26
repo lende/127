@@ -1,8 +1,7 @@
 package lib127
 
-// WithRandFunc configure a copy of Hosts with the given random function. Only
+// SetRandFunc sets the random number generator for the given Hosts. Only
 // exported for tests.
-func (h Hosts) WithRandFunc(fn func(uint32) (uint32, error)) *Hosts {
+func SetRandFunc(h *Hosts, fn func(uint32) (uint32, error)) {
 	h.randFunc = fn
-	return &h
 }

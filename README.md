@@ -25,10 +25,8 @@ Usage: 127 [option ...] [hostname]
 Print IP mapped to hostname, assigning a random IP if no mapping exists.
 
 Options:
-  -block string
-        address block (default "127.0.0.0/8")
   -d    delete hostname mapping
-  -hosts string
+  -f string
         path to hosts file (default "/etc/hosts")
   -n    do not output a trailing newline
   -v    print version information

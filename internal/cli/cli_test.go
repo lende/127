@@ -12,10 +12,7 @@ import (
 )
 
 func TestApp(t *testing.T) {
-	const (
-		hostsData   = "127.0.0.1 localhost localhost.localdomain"
-		fmtErrBlock = "Error: lib127: could not parse address block: invalid CIDR address: %s"
-	)
+	const hostsData = "127.0.0.1 localhost localhost.localdomain"
 
 	err := os.WriteFile(filepath.Join(t.TempDir(), "hosts"), []byte(hostsData), 0644)
 	if err != nil {
@@ -23,7 +20,6 @@ func TestApp(t *testing.T) {
 	}
 
 	run("localhost").assertStdout(t, "127.0.0.1")
-	run("-b", "192.168.0.0").assertStderr(t, fmtErrBlock, "192.168.0.0")
 	run("-v").assertStdout(t, "127 test-version %s/%s", runtime.GOOS, runtime.GOARCH)
 }
 
