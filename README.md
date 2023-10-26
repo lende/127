@@ -3,13 +3,13 @@
 _127_ is a tool for mapping easy-to-remember hostnames to random
 [loopback addresses].
 
-The tool works as a front-end to the standard [hosts-file] on your system. It
+The tool works as a front-end to the standard [hosts file] on your system. It
 has been tested on Linux, macOS (but see the [troubleshooting section]) and
 Windows.
 
 ## Installation
 
-```
+```console
 go install github.com/lende/127
 ```
 
@@ -40,36 +40,39 @@ Options:
 
 ## Examples
 
-### A simple session
-
-Let's map a hostname to a random loopback address:
+### A simple demonstration
 
 ```console
+# Map example.test to a random loopback address:
 $ sudo 127 example.test
 127.2.221.30
-```
 
-Running the command again simply returns the same IP address:
-
-```console
+# Running the command again simply returns the same IP address:
 $ 127 example.test
 127.2.221.30
-```
 
-We can check that it works by pinging the new host:
-
-```console
+# Ping the new host to check that it worked:
 $ ping example.test
 PING example.test (127.2.221.30) 56(84) bytes of data.
 64 bytes from example.test (127.2.221.30): icmp_seq=1 ttl=64 time=0.042 ms
+
+# Delete the mapping by specifying the -d flag:
+$ 127 -d example.test
+127.2.221.30
+$ ping example.test
+ping: example.test: Name or service not known
+
+# Running the command without any arguments simply returns a random IP:
+$ 127
+127.167.166.218
 ```
 
 ### Testing a third party service
 
 Let's say you want to try out [ownCloud]. Simply run:
 
-```
-docker run -d -p `sudo 127 -n owncloud.test`:80:80 owncloud
+```console
+sudo docker run --rm -p `sudo 127 owncloud.test`:80:80 owncloud/server
 ```
 
 ... and your _ownCloud_ instance should be available at `http://owncloud.test`.
@@ -89,7 +92,7 @@ docker run -d -p `sudo 127 -n owncloud.test`:80:80 owncloud
   - Here is an [idea for a daemon] that would solve the issue
 
 [loopback addresses]: https://en.wikipedia.org/wiki/Localhost#Name_resolution
-[hosts-file]: https://en.wikipedia.org/wiki/Hosts_(file)
+[hosts file]: https://en.wikipedia.org/wiki/Hosts_(file)
 [troubleshooting section]: #troubleshooting
 [download a binary release]: https://github.com/lende/127/releases
 [IDNA Punycode]: https://en.wikipedia.org/wiki/Punycode
