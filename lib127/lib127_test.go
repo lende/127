@@ -69,11 +69,9 @@ func newHosts(t *testing.T) *lib127.Hosts {
 
 	// Ensure predictable results with a pseudo-random number generator.
 	r := rand.New(rand.NewSource(1))
-	lib127.SetRandFunc(h,
-		func(max uint32) (uint32, error) {
-			return uint32(r.Int63n(int64(max))), nil
-		},
-	)
+	h.SetRandFunc(func(max uint32) (uint32, error) {
+		return uint32(r.Int63n(int64(max))), nil
+	})
 
 	return h
 }

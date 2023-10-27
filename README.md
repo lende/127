@@ -9,8 +9,11 @@ Windows.
 
 ## Installation
 
+To install the latest version from source:
+
 ```console
-go install github.com/lende/127
+git clone https://github.com/lende/127.git
+cd 127; make build; sudo make install
 ```
 
 You may also [download a binary release].
@@ -72,24 +75,17 @@ $ 127
 Let's say you want to try out [ownCloud]. Simply run:
 
 ```console
-sudo docker run --rm -p `sudo 127 owncloud.test`:80:80 owncloud/server
+sudo docker run --rm -p `sudo 127 owncloud.test`:80:80 owncloud:latest
 ```
 
 ... and your _ownCloud_ instance should be available at `http://owncloud.test`.
 
 ## Troubleshooting
 
-- If there is a `secure_path`-entry in your `/etc/sudoers`-file, you may have to
-  remove this or add your Go bin-path as an entry (otherwise `sudo` won't find
-  the executable)
-  - Alternatively you could set the owner of `/etc/hosts` to a group you are
-    member of (for instance the `sudo`-group), and give it write-access
-  - A third alternative is to copy the `127`-executable to a global path (such
-    as `/usr/local/bin`)
 - On macOS loopback addresses are not routed to the local host by default, and
-  aliases must be explicitly created for each IP address before binding to it
-  - See this [Super User question] for details
-  - Here is an [idea for a daemon] that would solve the issue
+  aliases must be explicitly created for each IP address before binding to it.
+  - See this [Super User question] for details.
+  - Here is an [idea for a daemon] that would solve the issue.
 
 [loopback addresses]: https://en.wikipedia.org/wiki/Localhost#Name_resolution
 [hosts file]: https://en.wikipedia.org/wiki/Hosts_(file)
