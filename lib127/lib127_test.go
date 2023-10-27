@@ -14,9 +14,9 @@ func TestRandomIP(t *testing.T) {
 	h := newHosts(t)
 
 	tests := []struct{ wantIP, wantErr string }{
-		{"127.134.24.251", "<nil>"},
-		{"127.17.127.229", "<nil>"},
-		{"127.129.197.227", "<nil>"},
+		{"127.10.87.204", "<nil>"},
+		{"127.174.217.245", "<nil>"},
+		{"127.209.224.187", "<nil>"},
 	}
 	for _, tt := range tests {
 		ip, err := h.RandomIP()
@@ -38,10 +38,10 @@ func TestOperations(t *testing.T) {
 		{h.Remove, "Remove", "example.test", "127.75.38.138", "<nil>"},
 		{h.Remove, "Remove", "example.test", "", "<nil>"},
 		{h.GetIP, "GetIP", "example.test", "", "<nil>"},
-		{h.Set, "Set", "Hello世界", "127.134.24.251", "<nil>"},
-		{h.GetIP, "GetIP", "Hello世界", "127.134.24.251", "<nil>"},
-		{h.GetIP, "GetIP", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
-		{h.Remove, "Remove", "xn--hello-ck1hg65u", "127.134.24.251", "<nil>"},
+		{h.Set, "Set", "Hello世界", "127.10.87.204", "<nil>"},
+		{h.GetIP, "GetIP", "Hello世界", "127.10.87.204", "<nil>"},
+		{h.GetIP, "GetIP", "xn--hello-ck1hg65u", "127.10.87.204", "<nil>"},
+		{h.Remove, "Remove", "xn--hello-ck1hg65u", "127.10.87.204", "<nil>"},
 		{h.GetIP, "GetIP", "Hello世界", "", "<nil>"},
 		{h.Set, "Set", "foo bar", "", `hostsfile: invalid hostname "foo bar": idna: disallowed rune U+0020`},
 		{h.Set, "Set", "192.168.0.1", "", `hostsfile: invalid hostname "192.168.0.1": looks like an IP address`},

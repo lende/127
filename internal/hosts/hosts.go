@@ -37,6 +37,16 @@ func Open(filename string) (*File, error) {
 	return &File{h, filename}, nil
 }
 
+// HasIP returns true if the ip exists in the hosts file.
+func (h File) HasIP(ip string) bool {
+	for _, r := range h.Records() {
+		if r.IpAddress.IP.String() == ip {
+			return true
+		}
+	}
+	return false
+}
+
 // GetIP returns the IP address associated with the given hostname, if any.
 func (h File) GetIP(hostname string) (ip string, err error) {
 	if hostname, err = adaptHostname(hostname); err != nil {

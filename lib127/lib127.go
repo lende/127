@@ -134,47 +134,24 @@ func (h *Hosts) randUint32(max uint32) (uint32, error) {
 	return h.randFunc(max)
 }
 
-func (h *Hosts) randomIP(f *hosts.File) (ip string, err error) {
-	minIP, maxIP := ipSpan(loopbackBlock)
-	taken, netIP := ips(f, loopbackBlock), make(net.IP, 4)
+func (h *Hosts) randomIP(f *hosts.File) (string, error) {
+	ip := make(net.IP, 4)
+
 	for {
 		// Generate a random offset.
-		offset, err := h.randUint32(maxIP - minIP) // #nosec G404
+		offset, err := h.randUint32(maxIP - minIP)
 		if err != nil {
 			return "", fmt.Errorf("lib127: cound not generate random offset: %v", err)
 		}
 
 		// Add random offset and convert integer to IP address.
-		binary.BigEndian.PutUint32(netIP, minIP+offset)
-		if ip = netIP.String(); !taken[ip] {
-			break
+		binary.BigEndian.PutUint32(ip, minIP+offset)
+		if f.HasIP(ip.String()) {
+			continue
 		}
-	}
-	return ip, nil
-}
 
-// ipSpan returns the smallest and largest valid IP (as integers) within the
-// specified IP network.
-func ipSpan(ipnet *net.IPNet) (minIP, maxIP uint32) {
-	minIP = binary.BigEndian.Uint32(ipnet.IP.To4()) + 1
-	maxIP = minIP + (^binary.BigEndian.Uint32(ipnet.Mask)) - 2
-	return minIP, maxIP
-}
-
-// ips returns the set of all mapped IP addresses within the given IP network
-// (used to check for uniqueness).
-func ips(f *hosts.File, ipnet *net.IPNet) map[string]bool {
-	ips := make(map[string]bool)
-	// Make sure we never touch localhost (may be missing in hosts-file).
-	if ipnet.Contains(net.IP{127, 0, 0, 1}) {
-		ips["127.0.0.1"] = true
+		return ip.String(), nil
 	}
-	for _, r := range f.Records() {
-		if ipnet.Contains(r.IpAddress.IP) {
-			ips[r.IpAddress.String()] = true
-		}
-	}
-	return ips
 }
 
 // defaultRandFunc is a cryptographically secure random number generator.
@@ -186,7 +163,7 @@ var defaultRandFunc = func(max uint32) (uint32, error) {
 	return uint32(bigInt.Int64()), nil
 }
 
-var loopbackBlock = &net.IPNet{
-	IP:   net.IPv4(127, 0, 0, 0),
-	Mask: net.CIDRMask(8, 32),
-}
+const (
+	minIP uint32 = 2130706434 // 127.0.0.2
+	maxIP uint32 = 2147483646 // 127.255.255.254
+)
