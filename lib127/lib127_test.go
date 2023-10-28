@@ -11,6 +11,8 @@ import (
 )
 
 func TestRandomIP(t *testing.T) {
+	t.Parallel()
+
 	h := newHosts(t)
 
 	tests := []struct{ wantIP, wantErr string }{
@@ -27,6 +29,8 @@ func TestRandomIP(t *testing.T) {
 }
 
 func TestOperations(t *testing.T) {
+	t.Parallel()
+
 	h := newHosts(t)
 
 	steps := []struct {
@@ -61,14 +65,14 @@ func newHosts(t *testing.T) *lib127.Hosts {
 127.75.38.138 example.test
 `
 	hostsFile := filepath.Join(t.TempDir(), "hosts")
-	if err := os.WriteFile(hostsFile, []byte(data), 0600); err != nil {
-		t.Errorf("Unexpected error:\n\t%v", err)
+	if err := os.WriteFile(hostsFile, []byte(data), 0o600); err != nil {
+		t.Fatalf("Unexpected error:\n\t%v", err)
 	}
 
 	h := lib127.NewHosts(hostsFile)
 
 	// Ensure predictable results with a pseudo-random number generator.
-	r := rand.New(rand.NewSource(1))
+	r := rand.New(rand.NewSource(1)) //nolint: gosec // G404: Use of weak random number generator.
 	h.SetRandFunc(func(max uint32) (uint32, error) {
 		return uint32(r.Int63n(int64(max))), nil
 	})

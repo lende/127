@@ -12,15 +12,19 @@ import (
 )
 
 func TestApp(t *testing.T) {
+	t.Parallel()
+
 	const hostsData = "127.0.0.1 localhost localhost.localdomain"
 
-	err := os.WriteFile(filepath.Join(t.TempDir(), "hosts"), []byte(hostsData), 0644)
+	err := os.WriteFile(filepath.Join(t.TempDir(), "hosts"), []byte(hostsData), 0o600)
 	if err != nil {
 		t.Fatalf("Writing file: %v", err)
 	}
 
 	run("localhost").assertStdout(t, "127.0.0.1")
 	run("-v").assertStdout(t, "127 test-version %s/%s", runtime.GOOS, runtime.GOARCH)
+	run("127.205.131.186").assertStderr(t,
+		`Error: hostsfile: invalid hostname "127.205.131.186": looks like an IP address`)
 }
 
 type output struct {

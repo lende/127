@@ -7,6 +7,8 @@ import (
 )
 
 func TestConstants(t *testing.T) {
+	t.Parallel()
+
 	ip := make(net.IP, 4)
 
 	binary.BigEndian.PutUint32(ip, minIP)

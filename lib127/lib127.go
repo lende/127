@@ -141,7 +141,7 @@ func (h *Hosts) randomIP(f *hosts.File) (string, error) {
 		// Generate a random offset.
 		offset, err := h.randUint32(maxIP - minIP)
 		if err != nil {
-			return "", fmt.Errorf("lib127: cound not generate random offset: %v", err)
+			return "", fmt.Errorf("lib127: cound not generate random offset: %w", err)
 		}
 
 		// Add random offset and convert integer to IP address.
@@ -155,7 +155,7 @@ func (h *Hosts) randomIP(f *hosts.File) (string, error) {
 }
 
 // defaultRandFunc is a cryptographically secure random number generator.
-var defaultRandFunc = func(max uint32) (uint32, error) {
+func defaultRandFunc(max uint32) (uint32, error) {
 	bigInt, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
 	if err != nil {
 		return 0, err

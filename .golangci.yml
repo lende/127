@@ -1,0 +1,8 @@
+run:
+  go: "1.21"
+
+linters:
+  enable:
+    - gosec
+    - gofumpt
+    - paralleltest
