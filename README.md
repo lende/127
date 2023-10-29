@@ -3,9 +3,8 @@
 _127_ is a tool for mapping easy-to-remember hostnames to random
 [loopback addresses].
 
-The tool works as a front-end to the standard [hosts file] on your system. It
-has been tested on Linux, macOS (but see the [troubleshooting section]) and
-Windows.
+The tool is a front-end to the standard [hosts file] on your system. Tested on
+Linux, but may also work on other Unix-like systems.
 
 ## Installation
 
@@ -28,18 +27,17 @@ Usage: 127 [option ...] [hostname]
 Print IP mapped to hostname, assigning a random IP if no mapping exists.
 
 Options:
-  -d    delete hostname mapping
+  -d    delete mapping
   -f string
         path to hosts file (default "/etc/hosts")
-  -n    do not output a trailing newline
   -v    print version information
 ```
 
 ### Notes
 
 - Internationalized domain names are converted and stored as [IDNA Punycode] in
-  the hosts-file (for compatibility)
-- There is also a [Go API] provided
+  the hosts-file (for compatibility).
+- There is also a [library] provided.
 
 ## Examples
 
@@ -80,19 +78,9 @@ sudo docker run --rm -p `sudo 127 owncloud.test`:80:80 owncloud:latest
 
 ... and your _ownCloud_ instance should be available at `http://owncloud.test`.
 
-## Troubleshooting
-
-- On macOS loopback addresses are not routed to the local host by default, and
-  aliases must be explicitly created for each IP address before binding to it.
-  - See this [Super User question] for details.
-  - Here is an [idea for a daemon] that would solve the issue.
-
 [loopback addresses]: https://en.wikipedia.org/wiki/Localhost#Name_resolution
 [hosts file]: https://en.wikipedia.org/wiki/Hosts_(file)
-[troubleshooting section]: #troubleshooting
 [download a binary release]: https://github.com/lende/127/releases
 [IDNA Punycode]: https://en.wikipedia.org/wiki/Punycode
-[Go API]: https://godoc.org/github.com/lende/127/lib
+[library]: https://godoc.org/github.com/lende/127/lib127
 [ownCloud]: https://owncloud.org/
-[Super User question]: https://superuser.com/questions/458875/
-[idea for a daemon]: https://github.com/lende/127d

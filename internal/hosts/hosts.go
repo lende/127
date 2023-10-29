@@ -14,9 +14,6 @@ import (
 // ErrHostnameInvalid is returned when the given hostname is invalid.
 var ErrInvalidHostname = errors.New("hosts: invalid hostname")
 
-// FileLocation is the OS-specific hosts-file location.
-var FileLocation = hostsfile.Location
-
 // Record represent a single line from a hosts-file.
 type Record hostsfile.Record
 

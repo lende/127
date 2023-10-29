@@ -14,6 +14,9 @@ import (
 	"github.com/lende/127/internal/hosts"
 )
 
+// DefaultHostsFile is the default hosts file location.
+const DefaultHostsFile = "/etc/hosts"
+
 // ErrHostnameInvalid indicates that a hostname is invalid. Errors can be tested
 // against it using errors.Is. It is never returned directly.
 var ErrInvalidHostname = hosts.ErrInvalidHostname
@@ -108,7 +111,7 @@ func (h *Hosts) Remove(hostname string) (ip string, err error) {
 
 func (h *Hosts) hostsFile() (*hosts.File, error) {
 	if h.filename == "" {
-		h.filename = hosts.FileLocation
+		h.filename = DefaultHostsFile
 	}
 	hosts, err := hosts.Open(h.filename)
 	if err != nil {
