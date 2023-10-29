@@ -14,8 +14,8 @@ import (
 	"github.com/lende/127/internal/hosts"
 )
 
-// ErrHostnameInvalid indicates that a hostname is invalid. It is never returned
-// directly, but errors can be tested against it using errors.Is.
+// ErrHostnameInvalid indicates that a hostname is invalid. Errors can be tested
+// against it using errors.Is. It is never returned directly.
 var ErrInvalidHostname = hosts.ErrInvalidHostname
 
 // HostnameError is implemented by hostname errors. Use errors.As to uncover
@@ -40,10 +40,6 @@ func NewHosts(filename string) *Hosts {
 	return &Hosts{filename: filename}
 }
 
-// DefaultHosts is the default Hosts and is used by GetIP, RandomIP, Remove, and
-// Set.
-var DefaultHosts = &Hosts{}
-
 // RandomIP returns a random unassigned loopback address.
 func (h *Hosts) RandomIP() (ip string, err error) {
 	f, err := h.hostsFile()
@@ -51,13 +47,6 @@ func (h *Hosts) RandomIP() (ip string, err error) {
 		return "", err
 	}
 	return h.randomIP(f)
-}
-
-// RandomIP returns a random unassigned loopback address.
-//
-// RandomIP is a wrapper around DefaultHosts.RandomIP.
-func RandomIP() (ip string, err error) {
-	return DefaultHosts.RandomIP()
 }
 
 // Set maps the specified hostname to a random unnasigned loopback address, and
@@ -83,15 +72,6 @@ func (h *Hosts) Set(hostname string) (ip string, err error) {
 	return ip, nil
 }
 
-// Set maps the specified hostname to an random unassigned loopback address, and
-// returns that IP. If the hostname is already mapped, we return the already
-// assigned IP address instead.
-//
-// Set is a wrapper around DefaultHosts.Set.
-func Set(hostname string) (ip string, err error) {
-	return DefaultHosts.Set(hostname)
-}
-
 // GetIP gets the IP associated with the specified hostname. Returns the empty
 // string if hostname were not found.
 func (h *Hosts) GetIP(hostname string) (ip string, err error) {
@@ -101,14 +81,6 @@ func (h *Hosts) GetIP(hostname string) (ip string, err error) {
 	}
 
 	return h.getIP(f, hostname)
-}
-
-// GetIP gets the IP associated with the specified hostname. Returns the empty
-// string if hostname were not found.
-//
-// GetIP is a wrapper around DefaultHosts.GetIP.
-func GetIP(hostname string) (ip string, err error) {
-	return DefaultHosts.GetIP(hostname)
 }
 
 // Remove unmaps the specified hostname and returns the associated IP. Returns
@@ -132,14 +104,6 @@ func (h *Hosts) Remove(hostname string) (ip string, err error) {
 	}
 
 	return ip, nil
-}
-
-// Remove unmaps the specified hostname and returns the associated IP. Returns
-// the empty string if hostname were not found.
-//
-// Remove is a wrapper around DefaultHosts.Remove.
-func Remove(hostname string) (ip string, err error) {
-	return DefaultHosts.Remove(hostname)
 }
 
 func (h *Hosts) hostsFile() (*hosts.File, error) {
