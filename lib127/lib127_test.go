@@ -1,7 +1,9 @@
 package lib127_test
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -47,15 +49,33 @@ func TestOperations(t *testing.T) {
 		{h.GetIP, "GetIP", "xn--hello-ck1hg65u", "127.10.87.204", "<nil>"},
 		{h.Remove, "Remove", "xn--hello-ck1hg65u", "127.10.87.204", "<nil>"},
 		{h.GetIP, "GetIP", "Hello世界", "", "<nil>"},
-		{h.Set, "Set", "foo bar", "", `hostsfile: invalid hostname "foo bar": idna: disallowed rune U+0020`},
-		{h.Set, "Set", "192.168.0.1", "", `hostsfile: invalid hostname "192.168.0.1": looks like an IP address`},
-		{h.Set, "Set", "foo_bar", "", `hostsfile: invalid hostname "foo_bar": idna: disallowed rune U+005F`},
+		{h.Set, "Set", "foo bar", "", `lib127: get hostname IP: hosts: adapt hostname "foo bar": idna: disallowed rune U+0020`},
+		{h.Set, "Set", "192.168.0.1", "", `lib127: get hostname IP: hosts: adapt hostname "192.168.0.1": host is IP address`},
+		{h.Set, "Set", "foo_bar", "", `lib127: get hostname IP: hosts: adapt hostname "foo_bar": idna: disallowed rune U+005F`},
 	}
 	for _, s := range steps {
 		ip, err := s.fn(s.hostname)
 		if ip != s.wantIP || fmt.Sprint(err) != s.wantErr {
 			t.Errorf("%s(%#v)\n\tgot:  %q, %v\n\twant: %q, %v", s.op, s.hostname, ip, err, s.wantIP, s.wantErr)
 		}
+	}
+}
+
+func TestErrors(t *testing.T) {
+	t.Parallel()
+
+	h := lib127.NewHosts("testdata/no-such-file")
+	_, err := h.GetIP("localhost")
+	assertErrorIs(t, err, fs.ErrNotExist)
+
+	h = newHosts(t)
+	_, err = h.Set("foo/bar")
+	assertErrorIs(t, err, lib127.ErrInvalidHostname)
+
+	var hostErr lib127.HostnameError
+	assertErrorAs(t, err, &hostErr)
+	if host := hostErr.Hostname(); host != "foo/bar" {
+		t.Errorf("Unepexected hostname: %q", host)
 	}
 }
 
@@ -78,4 +98,20 @@ func newHosts(t *testing.T) *lib127.Hosts {
 	})
 
 	return h
+}
+
+func assertErrorIs(t *testing.T, err, target error) {
+	t.Helper()
+
+	if !errors.Is(err, target) {
+		t.Errorf("Unexpected error: %q", err)
+	}
+}
+
+func assertErrorAs(t *testing.T, err error, target any) {
+	t.Helper()
+
+	if !errors.As(err, target) {
+		t.Errorf("Unexpected error: %q", err)
+	}
 }

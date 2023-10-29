@@ -6,3 +6,4 @@ linters:
     - gosec
     - gofumpt
     - paralleltest
+    - wrapcheck

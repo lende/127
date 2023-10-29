@@ -1,6 +1,7 @@
 package hosts
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -9,6 +10,9 @@ import (
 	hostsfile "github.com/kevinburke/hostsfile/lib"
 	"golang.org/x/net/idna"
 )
+
+// ErrHostnameInvalid is returned when the given hostname is invalid.
+var ErrInvalidHostname = errors.New("hosts: invalid hostname")
 
 // FileLocation is the OS-specific hosts-file location.
 var FileLocation = hostsfile.Location
@@ -26,13 +30,13 @@ type File struct {
 func Open(filename string) (*File, error) {
 	f, err := os.Open(filepath.Clean(filename))
 	if err != nil {
-		return nil, fmt.Errorf("hostsfile: could not open hosts file: %w", err)
+		return nil, fmt.Errorf("hosts: open file: %w", err)
 	}
 	defer f.Close()
 
 	h, err := hostsfile.Decode(f)
 	if err != nil {
-		return nil, fmt.Errorf("hostsfile: could not decode hosts file: %w", err)
+		return nil, fmt.Errorf("hosts: decode file: %v", err)
 	}
 	return &File{h, filename}, nil
 }
@@ -78,7 +82,7 @@ func (h *File) Set(hostname, ip string) (err error) {
 		return err
 	}
 	if err := h.hostsfile.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname); err != nil {
-		return fmt.Errorf("hostsfile: could not set hostname: %w", err)
+		return fmt.Errorf("hosts: set hostname: %v", err)
 	}
 	return nil
 }
@@ -96,30 +100,59 @@ func (h *File) Remove(hostname string) (err error) {
 func (h File) Save() error {
 	f, err := os.OpenFile(h.filename, os.O_WRONLY|os.O_TRUNC, 0)
 	if err != nil {
-		return fmt.Errorf("hostsfile: could not open hosts file %q: %w", h.filename, err)
+		return fmt.Errorf("hosts: open file: %w", err)
 	}
 
 	if err := hostsfile.Encode(f, h.hostsfile); err != nil {
 		_ = f.Close()
-		return fmt.Errorf("hostsfile: could not encode hosts file %q: %w", h.filename, err)
+		return fmt.Errorf("hosts: encode file: %v", err)
 	}
 
 	if err := f.Close(); err != nil {
-		return fmt.Errorf("hostsfile: could not close hosts file %q: %w", h.filename, err)
+		return fmt.Errorf("hosts: close file: %w", err)
 	}
 
 	return nil
+}
+
+type hostnameError struct {
+	format   string
+	hostname string
+	err      error
+}
+
+func (e hostnameError) Hostname() string {
+	return e.hostname
+}
+
+func (e hostnameError) Error() string {
+	msg := fmt.Sprintf(e.format, e.hostname)
+	if e.err != nil {
+		msg += ": " + e.err.Error()
+	}
+	return msg
+}
+
+func (e hostnameError) Is(err error) bool {
+	return err == ErrInvalidHostname
 }
 
 // adaptHostname validates the given hostname and converts it from unicode to
 // IDNA Punycode.
 func adaptHostname(hostname string) (string, error) {
 	if net.ParseIP(hostname) != nil {
-		return "", fmt.Errorf("hostsfile: invalid hostname %q: looks like an IP address", hostname)
+		return "", hostnameError{
+			format:   "hosts: adapt hostname %q: host is IP address",
+			hostname: hostname,
+		}
 	}
 	h, err := idna.Lookup.ToASCII(hostname)
 	if err != nil {
-		return "", fmt.Errorf("hostsfile: invalid hostname %q: %w", hostname, err)
+		return "", hostnameError{
+			format:   "hosts: adapt hostname %q",
+			hostname: hostname,
+			err:      err,
+		}
 	}
 	return h, nil
 }

@@ -24,7 +24,7 @@ func TestApp(t *testing.T) {
 	run("localhost").assertStdout(t, "127.0.0.1")
 	run("-v").assertStdout(t, "127 test-version %s/%s", runtime.GOOS, runtime.GOARCH)
 	run("127.205.131.186").assertStderr(t,
-		`Error: hostsfile: invalid hostname "127.205.131.186": looks like an IP address`)
+		`Error: lib127: get hostname IP: hosts: adapt hostname "127.205.131.186": host is IP address`)
 }
 
 type output struct {
