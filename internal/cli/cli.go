@@ -1,10 +1,13 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"runtime"
+	"strings"
 
 	"github.com/lende/127/internal/hosts"
 	"github.com/lende/127/lib127"
@@ -73,7 +76,7 @@ Options:
 
 func (a *App) output(ip string, err error) int {
 	if err != nil {
-		fmt.Fprintf(a.stderr, "Error: %v\n", err)
+		fmt.Fprintln(a.stderr, "127:", errorMessage(err))
 
 		return 1
 	}
@@ -83,4 +86,20 @@ func (a *App) output(ip string, err error) int {
 	}
 
 	return 0
+}
+
+func errorMessage(err error) string {
+	var (
+		pathErr *fs.PathError
+		hostErr lib127.HostnameError
+	)
+
+	switch {
+	case errors.As(err, &pathErr):
+		return pathErr.Error() + "."
+	case errors.As(err, &hostErr):
+		return fmt.Sprintf("invalid hostname: %s.", hostErr.Hostname())
+	default:
+		return "unexpected error: " + strings.TrimPrefix(err.Error(), "lib127: ") + "."
+	}
 }

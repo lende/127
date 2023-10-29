@@ -23,8 +23,8 @@ func TestApp(t *testing.T) {
 
 	run("localhost").assertStdout(t, "127.0.0.1")
 	run("-v").assertStdout(t, "127 test-version %s/%s", runtime.GOOS, runtime.GOARCH)
-	run("127.205.131.186").assertStderr(t,
-		`Error: lib127: get hostname IP: hosts: adapt hostname "127.205.131.186": host is IP address`)
+	run("127.205.131.186").assertStderr(t, `127: invalid hostname: 127.205.131.186.`)
+	run("-f", "non-existent").assertStderr(t, `127: open non-existent: no such file or directory.`)
 }
 
 type output struct {
@@ -65,6 +65,6 @@ func (o output) assert(t *testing.T, status int, stdout, stderr string) {
 		t.Errorf("Want stdout: %q, got: %q.", stdout, got)
 	}
 	if got := strings.TrimSpace(o.stderr); got != stderr {
-		t.Errorf("Want stderr: %q got: %q.", got, stderr)
+		t.Errorf("Want stderr: %q got: %q.", stderr, got)
 	}
 }
