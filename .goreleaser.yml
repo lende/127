@@ -1,0 +1,43 @@
+env:
+  - CGO_ENABLED=0
+
+builds:
+  - binary: "127"
+    mod_timestamp: "{{.CommitTimestamp}}"
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    goos:
+      - linux
+    goarch:
+      - "386"
+      - amd64
+      - arm
+      - arm64
+    ldflags:
+      - -s -w
+
+gomod:
+  proxy: true
+
+archives:
+  - id: linux
+    wrap_in_directory: "127"
+    builds_info:
+      group: root
+      owner: root
+      mtime: "{{ .CommitDate }}"
+    files:
+      - src: LICENSE
+        dst: LICENSE
+        info:
+          owner: root
+          group: root
+          mtime: "{{ .CommitDate }}"
+      - src: README.md
+        dst: README.md
+        info:
+          owner: root
+          group: root
+          mtime: "{{ .CommitDate }}"

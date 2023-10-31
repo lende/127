@@ -12,7 +12,7 @@ To install the latest version from source:
 
 ```console
 git clone https://github.com/lende/127.git
-cd 127; make build; sudo make install
+cd 127; make && sudo make install
 ```
 
 You may also [download a binary release].
@@ -37,7 +37,7 @@ Options:
 
 - Internationalized domain names are converted and stored as [IDNA Punycode] in
   the hosts-file (for compatibility).
-- There is also a [library] provided.
+- There is also a [Go package] provided.
 
 ## Examples
 
@@ -82,5 +82,5 @@ sudo docker run --rm -p `sudo 127 owncloud.test`:80:80 owncloud:latest
 [hosts file]: https://en.wikipedia.org/wiki/Hosts_(file)
 [download a binary release]: https://github.com/lende/127/releases
 [IDNA Punycode]: https://en.wikipedia.org/wiki/Punycode
-[library]: https://godoc.org/github.com/lende/127/lib127
+[Go package]: https://godoc.org/github.com/lende/127/lib127
 [ownCloud]: https://owncloud.org/

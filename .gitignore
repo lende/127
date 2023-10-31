@@ -5,3 +5,6 @@
 # Test binary built with `go test -c`.
 *.test
 *.test.exe
+
+# Distribution folder created by GoReleaser.
+dist

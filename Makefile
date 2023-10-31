@@ -1,13 +1,10 @@
 PREFIX := /usr/local
 
-all: test 127
-.PHONY: all
+build: test 127
+.PHONY: build
 
 127:
 	go build -o 127
-
-build: 127
-.PHONY: build
 
 check: test lint
 .PHONY: check
@@ -30,6 +27,19 @@ uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/share/doc/127
 .PHONY: uninstall
 
+snapshot:
+	goreleaser release --clean --snapshot
+.PHONY: snapshot
+
+dist: check
+	goreleaser release --clean --skip=announce,publish,validate
+.PHONY: dist
+
+release: check
+	goreleaser release --clean
+.PHONY: release
+
 clean:
 	go clean ./...
+	rm -rf ./dist
 .PHONY: clean
