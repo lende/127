@@ -17,9 +17,19 @@ import (
 // DefaultHostsFile is the default hosts file location.
 const DefaultHostsFile = "/etc/hosts"
 
-// ErrHostnameInvalid indicates that a hostname is invalid. Errors can be tested
-// against it using errors.Is. It is never returned directly.
-var ErrInvalidHostname = hosts.ErrInvalidHostname
+// These errors can be tested against using errors.Is. They are never returned
+// directly.
+var (
+	// ErrHostnameInvalid indicates that the hostname is invalid.
+	ErrInvalidHostname = hosts.ErrInvalidHostname
+
+	// ErrHostnameIsIP indicates that the hostname is an IP address.
+	ErrHostnameIsIP = hosts.ErrHostnameIsIP
+
+	// ErrCannotRemoveLocalhost is returned by Hosts.Remove when localhost was
+	// given as the hostname.
+	ErrCannotRemoveLocalhost = errors.New("127: cannot remove localhost")
+)
 
 // HostnameError is implemented by hostname errors. Use errors.As to uncover
 // this interface.
@@ -56,6 +66,10 @@ func (h *Hosts) RandomIP() (ip string, err error) {
 // returns that IP. If the hostname is already mapped, we return the already
 // assigned IP address instead.
 func (h *Hosts) Set(hostname string) (ip string, err error) {
+	if hostname == "localhost" {
+		return "127.0.0.1", nil
+	}
+
 	f, err := h.hostsFile()
 	if err != nil {
 		return "", err
@@ -78,6 +92,10 @@ func (h *Hosts) Set(hostname string) (ip string, err error) {
 // GetIP gets the IP associated with the specified hostname. Returns the empty
 // string if hostname were not found.
 func (h *Hosts) GetIP(hostname string) (ip string, err error) {
+	if hostname == "localhost" {
+		return "127.0.0.1", nil
+	}
+
 	f, err := h.hostsFile()
 	if err != nil {
 		return "", err
@@ -89,6 +107,10 @@ func (h *Hosts) GetIP(hostname string) (ip string, err error) {
 // Remove unmaps the specified hostname and returns the associated IP. Returns
 // the empty string if hostname were not found.
 func (h *Hosts) Remove(hostname string) (ip string, err error) {
+	if hostname == "localhost" {
+		return "", ErrCannotRemoveLocalhost
+	}
+
 	f, err := h.hostsFile()
 	if err != nil {
 		return "", err

@@ -1,6 +1,3 @@
-env:
-  - CGO_ENABLED=0
-
 builds:
   - binary: "127"
     mod_timestamp: "{{.CommitTimestamp}}"

@@ -2,7 +2,6 @@ package lib127_test
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"math/rand"
 	"os"
@@ -12,68 +11,49 @@ import (
 	"github.com/lende/127/lib127"
 )
 
-func TestRandomIP(t *testing.T) {
-	t.Parallel()
-
-	h := newHosts(t)
-
-	tests := []struct{ wantIP, wantErr string }{
-		{"127.10.87.204", "<nil>"},
-		{"127.174.217.245", "<nil>"},
-		{"127.209.224.187", "<nil>"},
-	}
-	for _, tt := range tests {
-		ip, err := h.RandomIP()
-		if ip != tt.wantIP || fmt.Sprint(err) != tt.wantErr {
-			t.Errorf("randomIP()\n\tgot:  %q, %v\n\twant: %q, %v", ip, err, tt.wantIP, tt.wantErr)
-		}
-	}
-}
-
 func TestOperations(t *testing.T) {
 	t.Parallel()
 
 	h := newHosts(t)
-
-	steps := []struct {
-		fn                            func(hostname string) (ip string, err error)
-		op, hostname, wantIP, wantErr string
-	}{
-		{h.GetIP, "GetIP", "example.test", "127.75.38.138", "<nil>"},
-		{h.Set, "Set", "example.test", "127.75.38.138", "<nil>"},
-		{h.Remove, "Remove", "example.test", "127.75.38.138", "<nil>"},
-		{h.Remove, "Remove", "example.test", "", "<nil>"},
-		{h.GetIP, "GetIP", "example.test", "", "<nil>"},
-		{h.Set, "Set", "Hello世界", "127.10.87.204", "<nil>"},
-		{h.GetIP, "GetIP", "Hello世界", "127.10.87.204", "<nil>"},
-		{h.GetIP, "GetIP", "xn--hello-ck1hg65u", "127.10.87.204", "<nil>"},
-		{h.Remove, "Remove", "xn--hello-ck1hg65u", "127.10.87.204", "<nil>"},
-		{h.GetIP, "GetIP", "Hello世界", "", "<nil>"},
-		{h.Set, "Set", "foo bar", "", `lib127: get hostname IP: hosts: adapt hostname "foo bar": idna: disallowed rune U+0020`},
-		{h.Set, "Set", "192.168.0.1", "", `lib127: get hostname IP: hosts: adapt hostname "192.168.0.1": host is IP address`},
-		{h.Set, "Set", "foo_bar", "", `lib127: get hostname IP: hosts: adapt hostname "foo_bar": idna: disallowed rune U+005F`},
-	}
-	for _, s := range steps {
-		ip, err := s.fn(s.hostname)
-		if ip != s.wantIP || fmt.Sprint(err) != s.wantErr {
-			t.Errorf("%s(%#v)\n\tgot:  %q, %v\n\twant: %q, %v", s.op, s.hostname, ip, err, s.wantIP, s.wantErr)
-		}
-	}
+	call(h.RandomIP()).assertIP(t, "127.10.87.204")
+	call(h.RandomIP()).assertIP(t, "127.174.217.245")
+	call(h.RandomIP()).assertIP(t, "127.209.224.187")
+	call(h.GetIP("example.test")).assertIP(t, "127.75.38.138")
+	call(h.Set("example.test")).assertIP(t, "127.75.38.138")
+	call(h.Remove("example.test")).assertIP(t, "127.75.38.138")
+	call(h.Remove("example.test")).assertIP(t, "")
+	call(h.GetIP("example.test")).assertIP(t, "")
+	call(h.Set("Hello世界")).assertIP(t, "127.99.234.97")
+	call(h.GetIP("Hello世界")).assertIP(t, "127.99.234.97")
+	call(h.GetIP("xn--hello-ck1hg65u")).assertIP(t, "127.99.234.97")
+	call(h.Remove("xn--hello-ck1hg65u")).assertIP(t, "127.99.234.97")
+	call(h.GetIP("Hello世界")).assertIP(t, "")
+	call(h.Set("")).assertErrorIs(t, lib127.ErrInvalidHostname)
+	call(h.Remove("")).assertErrorIs(t, lib127.ErrInvalidHostname)
+	call(h.Set("foo bar")).assertErrorIs(t, lib127.ErrInvalidHostname)
+	call(h.Set("foo_bar")).assertErrorIs(t, lib127.ErrInvalidHostname)
+	call(h.Set("192.168.0.1")).assertErrorIs(t, lib127.ErrInvalidHostname, lib127.ErrHostnameIsIP)
+	call(h.Remove("localhost")).assertErrorIs(t, lib127.ErrCannotRemoveLocalhost)
 }
 
 func TestErrors(t *testing.T) {
 	t.Parallel()
 
-	h := lib127.NewHosts("testdata/no-such-file")
-	_, err := h.GetIP("localhost")
-	assertErrorIs(t, err, fs.ErrNotExist)
-
-	h = newHosts(t)
-	_, err = h.Set("foo/bar")
-	assertErrorIs(t, err, lib127.ErrInvalidHostname)
+	var pathError *fs.PathError
+	missingFile := filepath.Join(t.TempDir(), "hosts")
+	h := lib127.NewHosts(missingFile)
+	call(h.GetIP("example.test")).
+		assertErrorIs(t, fs.ErrNotExist).
+		assertErrorAs(t, &pathError)
+	if path := pathError.Path; path != missingFile {
+		t.Errorf("Unepexected path: %q", path)
+	}
 
 	var hostErr lib127.HostnameError
-	assertErrorAs(t, err, &hostErr)
+	h = newHosts(t)
+	call(h.Set("foo/bar")).
+		assertErrorIs(t, lib127.ErrInvalidHostname).
+		assertErrorAs(t, &hostErr)
 	if host := hostErr.Hostname(); host != "foo/bar" {
 		t.Errorf("Unepexected hostname: %q", host)
 	}
@@ -100,18 +80,46 @@ func newHosts(t *testing.T) *lib127.Hosts {
 	return h
 }
 
-func assertErrorIs(t *testing.T, err, target error) {
-	t.Helper()
-
-	if !errors.Is(err, target) {
-		t.Errorf("Unexpected error: %q", err)
-	}
+type output struct {
+	ip  string
+	err error
 }
 
-func assertErrorAs(t *testing.T, err error, target any) {
+func call(ip string, err error) output {
+	return output{ip: ip, err: err}
+}
+
+func (o output) assertIP(t *testing.T, ip string) output {
 	t.Helper()
 
-	if !errors.As(err, target) {
-		t.Errorf("Unexpected error: %q", err)
+	o.assertErrorIs(t, nil)
+
+	if o.ip != ip {
+		t.Errorf("want IP: %q, got: %q", ip, o.ip)
 	}
+
+	return o
+}
+
+func (o output) assertErrorIs(t *testing.T, errs ...error) output {
+	t.Helper()
+
+	for _, err := range errs {
+		if !errors.Is(o.err, err) {
+			t.Errorf("unexpected error: %v", o.err)
+		}
+	}
+	return o
+}
+
+func (o output) assertErrorAs(t *testing.T, vals ...any) output {
+	t.Helper()
+
+	for _, val := range vals {
+		if !errors.As(o.err, val) {
+			t.Errorf("unexpected error: %v", o.err)
+		}
+	}
+
+	return o
 }

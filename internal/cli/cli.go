@@ -49,6 +49,7 @@ Options:
 	var (
 		printVersion  = flags.Bool("v", false, "print version information")
 		deleteMapping = flags.Bool("d", false, "delete mapping")
+		echoHostname  = flags.Bool("e", false, "echo hostname")
 		hostsFile     = flags.String("f", lib127.DefaultHostsFile, "path to hosts file")
 	)
 
@@ -69,36 +70,47 @@ Options:
 	case *deleteMapping:
 		return a.output(hosts.Remove(hostname))
 	default:
-		return a.output(hosts.Set(hostname))
+		host, err := hosts.Set(hostname)
+		if *echoHostname {
+			host = hostname
+		}
+		return a.output(host, err)
 	}
 }
 
 func (a *App) output(ip string, err error) int {
 	if err != nil {
-		fmt.Fprintln(a.stderr, "127:", errorMessage(err))
-
-		return 1
+		return a.error(err)
 	}
 
 	if ip != "" {
 		fmt.Fprintln(a.stdout, ip)
 	}
-
 	return 0
 }
 
-func errorMessage(err error) string {
+func (a *App) error(err error) int {
 	var (
 		pathErr *fs.PathError
 		hostErr lib127.HostnameError
 	)
 
 	switch {
+	case errors.Is(err, lib127.ErrCannotRemoveLocalhost):
+		fmt.Fprintln(a.stderr, "127: cannot remove localhost")
 	case errors.As(err, &pathErr):
-		return pathErr.Error() + "."
+		fmt.Fprintln(a.stderr, "127:", pathErr.Error())
 	case errors.As(err, &hostErr):
-		return fmt.Sprintf("invalid hostname: %s.", hostErr.Hostname())
+		if errors.Is(err, lib127.ErrHostnameIsIP) {
+			// Echo IP addresses to stdout instead of failing with an error.
+			fmt.Fprintln(a.stdout, hostErr.Hostname())
+			return 0
+		}
+
+		fmt.Fprintf(a.stderr, "127: invalid hostname: %s\n", hostErr.Hostname())
 	default:
-		return "unexpected error: " + strings.TrimPrefix(err.Error(), "lib127: ") + "."
+		fmt.Fprintln(a.stderr, "127: unexpected error:", strings.TrimPrefix(err.Error(), "lib127: "))
 	}
+
+	return 1
 }

@@ -28,6 +28,7 @@ Print IP mapped to hostname, assigning a random IP if no mapping exists.
 
 Options:
   -d    delete mapping
+  -e    echo hostname
   -f string
         path to hosts file (default "/etc/hosts")
   -v    print version information

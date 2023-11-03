@@ -11,8 +11,15 @@ import (
 	"golang.org/x/net/idna"
 )
 
-// ErrHostnameInvalid is returned when the given hostname is invalid.
-var ErrInvalidHostname = errors.New("hosts: invalid hostname")
+// These errors can be tested against using errors.Is. They are never returned
+// directly.
+var (
+	// ErrHostnameInvalid indicates that the hostname is invalid.
+	ErrInvalidHostname = errors.New("hosts: invalid hostname")
+
+	// ErrHostnameIsIP indicates that the hostname is an IP address.
+	ErrHostnameIsIP = errors.New("hosts: hostname is IP address")
+)
 
 // Record represent a single line from a hosts-file.
 type Record hostsfile.Record
@@ -53,6 +60,7 @@ func (h File) GetIP(hostname string) (ip string, err error) {
 	if hostname, err = adaptHostname(hostname); err != nil {
 		return "", err
 	}
+
 	for _, r := range h.hostsfile.Records() {
 		if r.Hostnames[hostname] {
 			return r.IpAddress.String(), nil
@@ -115,6 +123,7 @@ func (h File) Save() error {
 type hostnameError struct {
 	format   string
 	hostname string
+	isIP     bool
 	err      error
 }
 
@@ -131,15 +140,26 @@ func (e hostnameError) Error() string {
 }
 
 func (e hostnameError) Is(err error) bool {
-	return err == ErrInvalidHostname
+	if err == ErrInvalidHostname {
+		return true
+	}
+	return e.isIP && err == ErrHostnameIsIP
 }
 
 // adaptHostname validates the given hostname and converts it from unicode to
 // IDNA Punycode.
 func adaptHostname(hostname string) (string, error) {
+	if hostname == "" {
+		return "", hostnameError{
+			format:   "hosts: adapt hostname %q: hostname is empty",
+			hostname: hostname,
+		}
+	}
+
 	if net.ParseIP(hostname) != nil {
 		return "", hostnameError{
 			format:   "hosts: adapt hostname %q: host is IP address",
+			isIP:     true,
 			hostname: hostname,
 		}
 	}
