@@ -2,28 +2,20 @@ package cli_test
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/lende/127/internal/cli"
+	"github.com/lende/127/internal/testdata"
 )
 
 func TestApp(t *testing.T) {
 	t.Parallel()
 
-	const hostsData = "127.0.0.1 localhost localhost.localdomain\n"
-
-	hostsPath := filepath.Join(t.TempDir(), "hosts")
-	err := os.WriteFile(hostsPath, []byte(hostsData), 0o600)
-	if err != nil {
-		t.Fatalf("Writing file: %v", err)
-	}
-
+	hostsPath := testdata.HostsFile(t)
 	run("localhost").assertStdout(t, "127.0.0.1")
-	run("-v").assertStdout(t, "127 test-version %s/%s", runtime.GOOS, runtime.GOARCH)
 	run("-v").assertStdout(t, "127 test-version %s/%s", runtime.GOOS, runtime.GOARCH)
 	run("-f", hostsPath, "-e", "example.test").assertStdout(t, "example.test")
 	run("-f", hostsPath, "-d", "localhost").assertStderr(t, "127: cannot remove localhost")
@@ -31,7 +23,8 @@ func TestApp(t *testing.T) {
 	run("-f", hostsPath, "foo/bar").assertStderr(t, `127: invalid hostname: foo/bar`)
 
 	missingFile := filepath.Join(t.TempDir(), "hosts")
-	run("-f", missingFile).assertStderr(t, `127: open %s: no such file or directory`, missingFile)
+	run("-f", missingFile).
+		assertStderr(t, `127: open %s: no such file or directory`, missingFile)
 }
 
 type output struct {
@@ -53,13 +46,13 @@ func run(args ...string) output {
 func (o output) assertStdout(t *testing.T, format string, a ...any) {
 	t.Helper()
 
-	o.assert(t, 0, fmt.Sprintf(format, a...), "")
+	o.assert(t, cli.StatusSuccess, fmt.Sprintf(format, a...), "")
 }
 
 func (o output) assertStderr(t *testing.T, format string, a ...any) {
 	t.Helper()
 
-	o.assert(t, 1, "", fmt.Sprintf(format, a...))
+	o.assert(t, cli.StatusFailure, "", fmt.Sprintf(format, a...))
 }
 
 func (o output) assert(t *testing.T, status int, stdout, stderr string) {

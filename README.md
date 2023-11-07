@@ -3,8 +3,9 @@
 _127_ is a tool for mapping easy-to-remember hostnames to random
 [loopback addresses].
 
-The tool is a front-end to the standard [hosts file] on your system. Tested on
-Linux, but may also work on other Unix-like systems.
+The tool reads and modifies the standard [hosts file] on your system. There is
+also a [Go API] available. Tested on Linux, but may work on other Unix-like
+systems.
 
 ## Installation
 
@@ -33,12 +34,6 @@ Options:
         path to hosts file (default "/etc/hosts")
   -v    print version information
 ```
-
-### Notes
-
-- Internationalized domain names are converted and stored as [IDNA Punycode] in
-  the hosts-file (for compatibility).
-- There is also a [Go package] provided.
 
 ## Examples
 
@@ -82,6 +77,5 @@ sudo docker run --rm -p `sudo 127 owncloud.test`:80:80 owncloud:latest
 [loopback addresses]: https://en.wikipedia.org/wiki/Localhost#Name_resolution
 [hosts file]: https://en.wikipedia.org/wiki/Hosts_(file)
 [download a binary release]: https://github.com/lende/127/releases
-[IDNA Punycode]: https://en.wikipedia.org/wiki/Punycode
-[Go package]: https://godoc.org/github.com/lende/127/lib127
+[Go API]: https://godoc.org/github.com/lende/127/lib127
 [ownCloud]: https://owncloud.org/

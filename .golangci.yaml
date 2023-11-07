@@ -1,0 +1,49 @@
+run:
+  go: "1.21"
+
+linters:
+  enable:
+    - depguard
+    - gochecknoglobals
+    - gomnd
+    - gosec
+    - gofumpt
+    - paralleltest
+    - revive
+    - wrapcheck
+
+linters-settings:
+  depguard:
+    rules:
+      main:
+        allow:
+          - $gostd
+          - github.com/lende/127
+          - github.com/kevinburke/hostsfile/lib
+
+  gofumpt:
+    extra-rules: true
+
+  revive:
+    enable-all-rules: true
+    rules:
+      - name: add-constant
+        arguments:
+          - allowStrs: '""'
+            allowInts: "0,1,2"
+
+      - name: line-length-limit
+        arguments: [100]
+
+      - name: unhandled-error
+        arguments:
+          - "fmt.Fprint"
+          - "fmt.Fprintln"
+          - "fmt.Fprintf"
+
+issues:
+  exclude-rules:
+    # Allow pseudorandom number generators in tests.
+    - path: _test\.go
+      text: "G404:"
+      linters: [gosec]

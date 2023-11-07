@@ -56,13 +56,14 @@ func (h File) HasIP(ip string) bool {
 }
 
 // GetIP returns the IP address associated with the given hostname, if any.
-func (h File) GetIP(hostname string) (ip string, err error) {
-	if hostname, err = adaptHostname(hostname); err != nil {
+func (h File) GetIP(hostname string) (string, error) {
+	adaptedName, err := adaptHostname(hostname)
+	if err != nil {
 		return "", err
 	}
 
 	for _, r := range h.hostsfile.Records() {
-		if r.Hostnames[hostname] {
+		if r.Hostnames[adaptedName] {
 			return r.IpAddress.String(), nil
 		}
 	}
@@ -70,34 +71,41 @@ func (h File) GetIP(hostname string) (ip string, err error) {
 }
 
 // Records returns an array of all entries in the hosts-file.
-func (h File) Records() (rs []*Record) {
-	for _, r := range h.hostsfile.Records() {
+func (h File) Records() []*Record {
+	hostsfileRecs := h.hostsfile.Records()
+	recs := make([]*Record, 0, len(hostsfileRecs))
+
+	for _, r := range hostsfileRecs {
 		if len(r.Hostnames) == 0 {
 			continue
 		}
 
-		rs = append(rs, (*Record)(r))
+		recs = append(recs, (*Record)(r))
 	}
-	return rs
+	return recs
 }
 
 // Set maps the specified hostname to the given IP.
-func (h *File) Set(hostname, ip string) (err error) {
-	if hostname, err = adaptHostname(hostname); err != nil {
+func (h *File) Set(hostname, ip string) error {
+	adaptedName, err := adaptHostname(hostname)
+	if err != nil {
 		return err
 	}
-	if err := h.hostsfile.Set(net.IPAddr{IP: net.ParseIP(ip)}, hostname); err != nil {
+
+	if err := h.hostsfile.Set(net.IPAddr{IP: net.ParseIP(ip)}, adaptedName); err != nil {
 		return fmt.Errorf("hosts: set hostname: %v", err)
 	}
 	return nil
 }
 
 // Remove removes the given hostname mapping.
-func (h *File) Remove(hostname string) (err error) {
-	if hostname, err = adaptHostname(hostname); err != nil {
+func (h *File) Remove(hostname string) error {
+	adaptedName, err := adaptHostname(hostname)
+	if err != nil {
 		return err
 	}
-	h.hostsfile.Remove(hostname)
+
+	h.hostsfile.Remove(adaptedName)
 	return nil
 }
 

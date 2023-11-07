@@ -1,0 +1,7 @@
+127.0.0.1 localhost localhost.localdomain
+127.0.0.3 loopback.test
+
+# Commented out record.
+# 192.0.2.16 private.test
+
+93.184.216.34 example.com # Public address.

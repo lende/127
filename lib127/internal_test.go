@@ -9,7 +9,7 @@ import (
 func TestConstants(t *testing.T) {
 	t.Parallel()
 
-	ip := make(net.IP, 4)
+	ip := make(net.IP, net.IPv4len)
 
 	binary.BigEndian.PutUint32(ip, minIP)
 	if ip.String() != "127.0.0.2" {

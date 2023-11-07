@@ -12,9 +12,10 @@ import (
 	"github.com/lende/127/lib127"
 )
 
+// Status codes returned by App.Run to indicate sucess or failure.
 const (
-	StatusSuccess = 0 // StatusSuccess is the status code returned on success.
-	StatusFailure = 1 // StatusFailure is the status code returned on failure.
+	StatusSuccess = 0
+	StatusFailure = 1
 )
 
 // App is a command-line interface to lib127.
@@ -54,12 +55,12 @@ Options:
 	)
 
 	if err := flags.Parse(args); err != nil {
-		return 1
+		return StatusFailure
 	}
 
 	if *printVersion {
 		fmt.Fprintf(a.stdout, "127 %s %s/%s\n", a.version, runtime.GOOS, runtime.GOARCH)
-		return 0
+		return StatusSuccess
 	}
 
 	hosts := lib127.NewHosts(*hostsFile)
@@ -86,7 +87,7 @@ func (a *App) output(ip string, err error) int {
 	if ip != "" {
 		fmt.Fprintln(a.stdout, ip)
 	}
-	return 0
+	return StatusSuccess
 }
 
 func (a *App) error(err error) int {
@@ -104,13 +105,13 @@ func (a *App) error(err error) int {
 		if errors.Is(err, lib127.ErrHostnameIsIP) {
 			// Echo IP addresses to stdout instead of failing with an error.
 			fmt.Fprintln(a.stdout, hostErr.Hostname())
-			return 0
+			return StatusSuccess
 		}
 
 		fmt.Fprintf(a.stderr, "127: invalid hostname: %s\n", hostErr.Hostname())
 	default:
-		fmt.Fprintln(a.stderr, "127: unexpected error:", strings.TrimPrefix(err.Error(), "lib127: "))
+		fmt.Fprintln(a.stderr, "127:", strings.TrimPrefix(err.Error(), "lib127: "))
 	}
 
-	return 1
+	return StatusFailure
 }

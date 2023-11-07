@@ -4,10 +4,10 @@ import (
 	"errors"
 	"io/fs"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/lende/127/internal/testdata"
 	"github.com/lende/127/lib127"
 )
 
@@ -15,19 +15,36 @@ func TestOperations(t *testing.T) {
 	t.Parallel()
 
 	h := newHosts(t)
-	call(h.RandomIP()).assertIP(t, "127.10.87.204")
-	call(h.RandomIP()).assertIP(t, "127.174.217.245")
-	call(h.RandomIP()).assertIP(t, "127.209.224.187")
-	call(h.GetIP("example.test")).assertIP(t, "127.75.38.138")
-	call(h.Set("example.test")).assertIP(t, "127.75.38.138")
-	call(h.Remove("example.test")).assertIP(t, "127.75.38.138")
-	call(h.Remove("example.test")).assertIP(t, "")
-	call(h.GetIP("example.test")).assertIP(t, "")
-	call(h.Set("Hello世界")).assertIP(t, "127.99.234.97")
-	call(h.GetIP("Hello世界")).assertIP(t, "127.99.234.97")
-	call(h.GetIP("xn--hello-ck1hg65u")).assertIP(t, "127.99.234.97")
-	call(h.Remove("xn--hello-ck1hg65u")).assertIP(t, "127.99.234.97")
-	call(h.GetIP("Hello世界")).assertIP(t, "")
+
+	// Pseudo-random IPs.
+	call(h.RandomIP()).assertIP(t, pseudoRndIP1)
+	call(h.RandomIP()).assertIP(t, pseudoRndIP2)
+	call(h.RandomIP()).assertIP(t, pseudoRndIP3)
+
+	// Various operations on the same hostname.
+	const loopbackHostname, loopbackIP = "loopback.test", "127.0.0.3"
+	call(h.GetIP(loopbackHostname)).assertIP(t, loopbackIP)
+	call(h.Set(loopbackHostname)).assertIP(t, loopbackIP)
+	call(h.Remove(loopbackHostname)).assertIP(t, loopbackIP)
+	call(h.Remove(loopbackHostname)).assertIP(t, "")
+	call(h.GetIP(loopbackHostname)).assertIP(t, "")
+	call(h.Set(loopbackHostname)).assertIP(t, pseudoRndIP4)
+
+	// Pre-assigned public domain.
+	call(h.GetIP("example.com")).assertIP(t, "93.184.216.34")
+
+	// Commented out hostname.
+	call(h.GetIP("private.test")).assertIP(t, "")
+
+	// Internationalized hostname.
+	const chineseHostname, chinesePunicode = "Hello世界", "xn--hello-ck1hg65u"
+	call(h.Set(chineseHostname)).assertIP(t, pseudoRndIP5)
+	call(h.GetIP(chineseHostname)).assertIP(t, pseudoRndIP5)
+	call(h.GetIP(chinesePunicode)).assertIP(t, pseudoRndIP5)
+	call(h.Remove(chinesePunicode)).assertIP(t, pseudoRndIP5)
+	call(h.GetIP(chineseHostname)).assertIP(t, "")
+
+	// Various illegal arguments.
 	call(h.Set("")).assertErrorIs(t, lib127.ErrInvalidHostname)
 	call(h.Remove("")).assertErrorIs(t, lib127.ErrInvalidHostname)
 	call(h.Set("foo bar")).assertErrorIs(t, lib127.ErrInvalidHostname)
@@ -59,20 +76,19 @@ func TestErrors(t *testing.T) {
 	}
 }
 
-func newHosts(t *testing.T) *lib127.Hosts {
-	data := `127.0.0.1 localhost localhost.localdomain
-127.0.0.2 localhost2
-127.75.38.138 example.test
-`
-	hostsFile := filepath.Join(t.TempDir(), "hosts")
-	if err := os.WriteFile(hostsFile, []byte(data), 0o600); err != nil {
-		t.Fatalf("Unexpected error:\n\t%v", err)
-	}
+const (
+	pseudoRndIP1 = "127.10.87.204"
+	pseudoRndIP2 = "127.174.217.245"
+	pseudoRndIP3 = "127.209.224.187"
+	pseudoRndIP4 = "127.99.234.97"
+	pseudoRndIP5 = "127.224.77.159"
+)
 
-	h := lib127.NewHosts(hostsFile)
+func newHosts(t *testing.T) *lib127.Hosts {
+	h := lib127.NewHosts(testdata.HostsFile(t))
 
 	// Ensure predictable results with a pseudo-random number generator.
-	r := rand.New(rand.NewSource(1)) //nolint: gosec // G404: Use of weak random number generator.
+	r := rand.New(rand.NewSource(1))
 	h.SetRandFunc(func(max uint32) (uint32, error) {
 		return uint32(r.Int63n(int64(max))), nil
 	})
