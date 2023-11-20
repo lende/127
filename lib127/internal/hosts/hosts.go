@@ -15,7 +15,7 @@ import (
 // directly.
 var (
 	// ErrHostnameInvalid indicates that the hostname is invalid.
-	ErrInvalidHostname = errors.New("hosts: invalid hostname")
+	ErrHostnameInvalid = errors.New("hosts: invalid hostname")
 
 	// ErrHostnameIsIP indicates that the hostname is an IP address.
 	ErrHostnameIsIP = errors.New("hosts: hostname is IP address")
@@ -55,8 +55,8 @@ func (h File) HasIP(ip string) bool {
 	return false
 }
 
-// GetIP returns the IP address associated with the given hostname, if any.
-func (h File) GetIP(hostname string) (string, error) {
+// IP returns the IP address associated with the given hostname, if any.
+func (h File) IP(hostname string) (string, error) {
 	adaptedName, err := adaptHostname(hostname)
 	if err != nil {
 		return "", err
@@ -85,8 +85,8 @@ func (h File) Records() []*Record {
 	return recs
 }
 
-// Set maps the specified hostname to the given IP.
-func (h *File) Set(hostname, ip string) error {
+// Map maps the specified hostname to the given IP.
+func (h *File) Map(hostname, ip string) error {
 	adaptedName, err := adaptHostname(hostname)
 	if err != nil {
 		return err
@@ -98,8 +98,8 @@ func (h *File) Set(hostname, ip string) error {
 	return nil
 }
 
-// Remove removes the given hostname mapping.
-func (h *File) Remove(hostname string) error {
+// Unmap removes the given hostname mapping.
+func (h *File) Unmap(hostname string) error {
 	adaptedName, err := adaptHostname(hostname)
 	if err != nil {
 		return err
@@ -129,14 +129,9 @@ func (h File) Save() error {
 }
 
 type hostnameError struct {
-	format   string
-	hostname string
-	isIP     bool
-	err      error
-}
-
-func (e hostnameError) Hostname() string {
-	return e.hostname
+	format, hostname string
+	isIP             bool
+	err              error
 }
 
 func (e hostnameError) Error() string {
@@ -148,7 +143,7 @@ func (e hostnameError) Error() string {
 }
 
 func (e hostnameError) Is(err error) bool {
-	if err == ErrInvalidHostname {
+	if err == ErrHostnameInvalid {
 		return true
 	}
 	return e.isIP && err == ErrHostnameIsIP
@@ -159,14 +154,14 @@ func (e hostnameError) Is(err error) bool {
 func adaptHostname(hostname string) (string, error) {
 	if hostname == "" {
 		return "", hostnameError{
-			format:   "hosts: adapt hostname %q: hostname is empty",
+			format:   "hosts: check %q: hostname is empty",
 			hostname: hostname,
 		}
 	}
 
 	if net.ParseIP(hostname) != nil {
 		return "", hostnameError{
-			format:   "hosts: adapt hostname %q: host is IP address",
+			format:   "hosts: parse %q: host is IP address",
 			isIP:     true,
 			hostname: hostname,
 		}
@@ -174,7 +169,7 @@ func adaptHostname(hostname string) (string, error) {
 	h, err := idna.Lookup.ToASCII(hostname)
 	if err != nil {
 		return "", hostnameError{
-			format:   "hosts: adapt hostname %q",
+			format:   "hosts: adapt %q",
 			hostname: hostname,
 			err:      err,
 		}

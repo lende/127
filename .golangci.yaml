@@ -5,7 +5,6 @@ linters:
   enable:
     - depguard
     - gochecknoglobals
-    - gomnd
     - gosec
     - gofumpt
     - paralleltest

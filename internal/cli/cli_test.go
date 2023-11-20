@@ -16,15 +16,15 @@ func TestApp(t *testing.T) {
 
 	hostsPath := testdata.HostsFile(t)
 	run("localhost").assertStdout(t, "127.0.0.1")
-	run("-v").assertStdout(t, "127 test-version %s/%s", runtime.GOOS, runtime.GOARCH)
+	run("-v").assertStdout(t, "127t 0.0.0-test %s/%s", runtime.GOOS, runtime.GOARCH)
 	run("-f", hostsPath, "-e", "example.test").assertStdout(t, "example.test")
-	run("-f", hostsPath, "-d", "localhost").assertStderr(t, "127: cannot remove localhost")
+	run("-f", hostsPath, "-u", "localhost").assertStderr(t, "127t: cannot remove localhost")
 	run("-f", hostsPath, "127.205.131.186").assertStdout(t, `127.205.131.186`)
-	run("-f", hostsPath, "foo/bar").assertStderr(t, `127: invalid hostname: foo/bar`)
+	run("-f", hostsPath, "foo/bar").assertStderr(t, `127t: invalid hostname: foo/bar`)
 
 	missingFile := filepath.Join(t.TempDir(), "hosts")
 	run("-f", missingFile).
-		assertStderr(t, `127: open %s: no such file or directory`, missingFile)
+		assertStderr(t, `127t: open %s: no such file or directory`, missingFile)
 }
 
 type output struct {
@@ -34,7 +34,10 @@ type output struct {
 
 func run(args ...string) output {
 	var stdout, stderr strings.Builder
-	app := cli.NewApp("test-version", &stdout, &stderr)
+	app := cli.App{
+		Name: "127t", Version: "0.0.0-test",
+		Writer: &stdout, ErrorWriter: &stderr,
+	}
 
 	return output{
 		status: app.Run(args...),
@@ -65,6 +68,6 @@ func (o output) assert(t *testing.T, status int, stdout, stderr string) {
 		t.Errorf("Want stdout: %q, got: %q.", stdout, got)
 	}
 	if got := strings.TrimSpace(o.stderr); got != stderr {
-		t.Errorf("Want stderr: %q got: %q.", stderr, got)
+		t.Errorf("Want stderr: %q, got: %q.", stderr, got)
 	}
 }

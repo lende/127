@@ -13,6 +13,6 @@ import (
 var version string
 
 func main() {
-	app := cli.NewApp(strings.TrimSpace(version), os.Stdout, os.Stderr)
+	app := cli.App{Version: strings.TrimSpace(version)}
 	os.Exit(app.Run(os.Args[1:]...))
 }

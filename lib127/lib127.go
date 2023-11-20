@@ -20,139 +20,34 @@ const DefaultHostsFile = "/etc/hosts"
 // These errors can be tested against using errors.Is. They are never returned
 // directly.
 var (
-	// ErrHostnameInvalid indicates that the hostname is invalid.
-	ErrInvalidHostname = hosts.ErrInvalidHostname
+	// ErrHostnameInvalid indicates an invalid hostname.
+	ErrHostnameInvalid = hosts.ErrHostnameInvalid
 
-	// ErrHostnameIsIP indicates that the hostname is an IP address.
+	// ErrHostnameIsIP indicates that an IP address was given as hostname.
 	ErrHostnameIsIP = hosts.ErrHostnameIsIP
 
-	// ErrCannotRemoveLocalhost is returned by Hosts.Remove when localhost was
-	// given as the hostname.
-	ErrCannotRemoveLocalhost = errors.New("127: cannot remove localhost")
+	// ErrCannotUnmapLocalhost indicates a request to unmap localhost.
+	ErrCannotUnmapLocalhost = errors.New("127: cannot unmap localhost")
 )
 
-// HostnameError is implemented by hostname errors. Use errors.As to uncover
-// this interface.
-type HostnameError interface {
-	error
-	Hostname() string
-}
-
 // Hosts provide methods for mapping hostnames to random IP addresses. Its zero
-// value is usable and provides good defaults.
-//
-// Methods may return errors that wraps HostnameError or *fs.PathError.
+// value is usable and operates on the default hosts file.
 type Hosts struct {
-	filename string
+	file     *hosts.File
+	changed  bool
 	randFunc func(uint32) (uint32, error)
 }
 
-// NewHosts creates a new Hosts using the given file. If filename is "" the
-// default filename is used.
-func NewHosts(filename string) *Hosts {
-	return &Hosts{filename: filename}
-}
-
-// RandomIP returns a random unassigned loopback address.
-func (h *Hosts) RandomIP() (string, error) {
-	f, err := h.hostsFile()
+// NewHosts opens a new Hosts using the given file. If filename is "" the
+// default hosts file is opened.
+//
+// Returned file system errors wrap *fs.PathError.
+func Open(filename string) (*Hosts, error) {
+	f, err := hosts.Open(filename)
 	if err != nil {
-		return "", err
+		return nil, wrapError("open file", err)
 	}
-	return h.randomAvailableIP(f)
-}
-
-// Set maps the specified hostname to a random unnasigned loopback address, and
-// returns that IP. If the hostname is already mapped, we return the already
-// assigned IP address instead.
-func (h *Hosts) Set(hostname string) (string, error) {
-	if isLocalhost(hostname) {
-		return "127.0.0.1", nil
-	}
-
-	f, err := h.hostsFile()
-	if err != nil {
-		return "", err
-	}
-
-	if ip, err := getIP(f, hostname); ip != "" || err != nil {
-		return ip, err
-	}
-
-	ip, err := h.randomAvailableIP(f)
-	if err != nil {
-		return "", err
-	}
-
-	if err = f.Set(hostname, ip); err != nil {
-		return "", wrapError("set hostname", err)
-	}
-	if err := save(f); err != nil {
-		return "", err
-	}
-
-	return ip, nil
-}
-
-// GetIP gets the IP associated with the specified hostname. Returns the empty
-// string if hostname were not found.
-func (h *Hosts) GetIP(hostname string) (string, error) {
-	if isLocalhost(hostname) {
-		return "127.0.0.1", nil
-	}
-
-	f, err := h.hostsFile()
-	if err != nil {
-		return "", err
-	}
-
-	return getIP(f, hostname)
-}
-
-// Remove unmaps the specified hostname and returns the associated IP. Returns
-// the empty string if hostname were not found.
-func (h *Hosts) Remove(hostname string) (string, error) {
-	if isLocalhost(hostname) {
-		return "", ErrCannotRemoveLocalhost
-	}
-
-	f, err := h.hostsFile()
-	if err != nil {
-		return "", err
-	}
-
-	ip, err := getIP(f, hostname)
-	if ip == "" || err != nil {
-		return "", err
-	}
-
-	if err = f.Remove(hostname); err != nil {
-		return "", wrapError("remove hostname", err)
-	}
-
-	if err = save(f); err != nil {
-		return "", err
-	}
-
-	return ip, nil
-}
-
-func (h *Hosts) hostsFile() (*hosts.File, error) {
-	if h.filename == "" {
-		h.filename = DefaultHostsFile
-	}
-	f, err := hosts.Open(h.filename)
-	if err != nil {
-		return nil, wrapError("open hosts file", err)
-	}
-	return f, nil
-}
-
-func (h *Hosts) randUint32(max uint32) (uint32, error) {
-	if h.randFunc == nil {
-		return defaultRandFunc(max)
-	}
-	return h.randFunc(max)
+	return &Hosts{file: f}, nil
 }
 
 const (
@@ -160,7 +55,8 @@ const (
 	maxIP uint32 = 2147483646 // 127.255.255.254
 )
 
-func (h *Hosts) randomAvailableIP(f *hosts.File) (string, error) {
+// RandomIP returns a random unassigned loopback address.
+func (h *Hosts) RandomIP() (string, error) {
 	ip := make(net.IP, net.IPv4len)
 
 	for {
@@ -172,7 +68,7 @@ func (h *Hosts) randomAvailableIP(f *hosts.File) (string, error) {
 
 		// Add random offset and convert integer to IP address.
 		binary.BigEndian.PutUint32(ip, minIP+offset)
-		if f.HasIP(ip.String()) {
+		if h.file.HasIP(ip.String()) {
 			continue
 		}
 
@@ -180,19 +76,94 @@ func (h *Hosts) randomAvailableIP(f *hosts.File) (string, error) {
 	}
 }
 
-func getIP(f *hosts.File, hostname string) (string, error) {
-	ip, err := f.GetIP(hostname)
+// IP returns the IP address associated with the specified hostname. Returns an
+// empty string if hostname were not found.
+//
+// Returned hostname errors can be matched against ErrInvalidHostname and
+// ErrHostnameIsIP.
+func (h *Hosts) IP(hostname string) (string, error) {
+	if isLocalhost(hostname) {
+		return "127.0.0.1", nil
+	}
+
+	ip, err := h.file.IP(hostname)
 	if err != nil {
-		return "", wrapError("get hostname IP", err)
+		return "", wrapError("get IP", err)
 	}
 	return ip, nil
 }
 
-func save(f *hosts.File) error {
-	if err := f.Save(); err != nil {
-		return wrapError("save changes", err)
+// Map maps the specified hostname to a random unnasigned loopback address, and
+// returns that IP. If the hostname is already mapped, we return the already
+// assigned IP address instead.
+//
+// Returned hostname errors can be matched against ErrInvalidHostname and
+// ErrHostnameIsIP.
+func (h *Hosts) Map(hostname string) (string, error) {
+	if isLocalhost(hostname) {
+		return "127.0.0.1", nil
+	}
+
+	if ip, err := h.IP(hostname); ip != "" || err != nil {
+		return ip, err
+	}
+
+	ip, err := h.RandomIP()
+	if err != nil {
+		return "", err
+	}
+
+	if err = h.file.Map(hostname, ip); err != nil {
+		return "", wrapError("set hostname", err)
+	}
+	h.changed = true
+
+	return ip, nil
+}
+
+// Unmap unmaps the specified hostname and returns the associated IP. Returns
+// an empty string if hostname were not found.
+//
+// Returned hostname errors can be matched against ErrInvalidHostname and
+// ErrHostnameIsIP.
+func (h *Hosts) Unmap(hostname string) (string, error) {
+	if isLocalhost(hostname) {
+		return "", ErrCannotUnmapLocalhost
+	}
+
+	ip, err := h.IP(hostname)
+	if err != nil {
+		return "", err
+	}
+
+	if err = h.file.Unmap(hostname); err != nil {
+		return "", wrapError("set hostname", err)
+	}
+	h.changed = true
+
+	return ip, nil
+}
+
+// Save saves the modified hosts file to disk. Does nothing if no changes were
+// made.
+//
+// Returned file system errors wrap *fs.PathError.
+func (h *Hosts) Save() error {
+	if !h.changed {
+		return nil
+	}
+
+	if err := h.file.Save(); err != nil {
+		return wrapError("save", err)
 	}
 	return nil
+}
+
+func (h *Hosts) randUint32(max uint32) (uint32, error) {
+	if h.randFunc == nil {
+		return defaultRandFunc(max)
+	}
+	return h.randFunc(max)
 }
 
 // defaultRandFunc is a cryptographically secure random number generator.
@@ -206,8 +177,7 @@ func defaultRandFunc(max uint32) (uint32, error) {
 
 func wrapError(msg string, err error) error {
 	// Wrap recognized errors to make them available to the caller.
-	if errors.As(err, new(*fs.PathError)) ||
-		errors.As(err, new(HostnameError)) {
+	if errors.As(err, new(*fs.PathError)) || errors.Is(err, ErrHostnameInvalid) {
 		return fmt.Errorf("lib127: %s: %w", msg, err)
 	}
 
