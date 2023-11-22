@@ -1,17 +1,23 @@
 PREFIX := /usr/local
 
-LINT    = go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.1
-RELEASE = go run github.com/goreleaser/goreleaser@v1.21.2 release --clean
+LINT    = go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+RELEASE = go run github.com/goreleaser/goreleaser@v1.22.1 release --clean
 
-build: test 127
+VERSION != git describe --long --dirty
+
+build: check 127
 .PHONY: build
 
 127:
-	go build -o 127
+	go build -o 127 -ldflags "-X main.version=$(VERSION)"
 
 run:
 	@go run .
 .PHONY: run
+
+version:
+	@go run -ldflags "-X main.version=$(VERSION)" . -v
+.PHONY: version
 
 check: test lint
 .PHONY: check

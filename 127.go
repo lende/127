@@ -4,15 +4,14 @@ package main
 import (
 	_ "embed"
 	"os"
-	"strings"
 
 	"github.com/lende/127/internal/cli"
+	ver "github.com/lende/127/internal/version"
 )
 
-//go:embed VERSION
 var version string
 
 func main() {
-	app := cli.App{Version: strings.TrimSpace(version)}
+	app := cli.App{Version: ver.Semantic(version)}
 	os.Exit(app.Run(os.Args[1:]...))
 }
