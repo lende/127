@@ -28,11 +28,11 @@ Usage: 127 [option ...] [hostname]
 Print IP mapped to hostname, assigning a random IP if no mapping exists.
 
 Options:
-  -d    delete mapping
   -e    echo hostname
   -f string
         path to hosts file (default "/etc/hosts")
-  -v    print version information
+  -u    unmap hostname
+  -v    print version
 ```
 
 ## Examples
@@ -54,7 +54,7 @@ PING example.test (127.2.221.30) 56(84) bytes of data.
 64 bytes from example.test (127.2.221.30): icmp_seq=1 ttl=64 time=0.042 ms
 
 # Delete the mapping by specifying the -d flag:
-$ 127 -d example.test
+$ 127 -u example.test
 127.2.221.30
 $ ping example.test
 ping: example.test: Name or service not known
